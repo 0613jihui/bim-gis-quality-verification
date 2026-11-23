@@ -8,8 +8,10 @@ BG-QVF는 IFC 건물 모델을 CityGML 3.0(CityJSON 2.0)으로 옮겨 GIS에 통
 | 단계 | 내용 | 규칙 |
 |---|---|---|
 | P1 원천 BIM 검증 | 스키마, 식별자, 공간참조(LoGeoRef), 분류, 속성, 솔리드 | R01–R08 |
-| P2 변환 검증 | 의미 매핑률, LoD1 형상 유효성, 형상 타당 범위, 메타데이터 | R09–R12 |
-| P3 통합 검증 | 좌표계 일치, 위치 편차(Hausdorff), 기존 레이어와의 중첩, 식별자 추적성 | R13–R16 |
+| P2 변환 검증 | 의미 매핑률, 솔리드 유효성, 형상 타당 범위, 식별자 연계 | R09–R12 |
+| P3 통합 검증 | 좌표계 적용범위, 기준자료 대비 위치편차, 기존 레이어와의 중첩, 메타데이터 | R13–R16 |
+
+R14(위치편차)는 기준자료의 종류에 따라 두 방법으로 측정합니다. E1의 buildingSMART 분야 모델 4개는 공통 기준객체 중심의 평면 위치를 연합모델 중앙값과 비교하고, E2·E3는 기준 모델과 변이 모델의 건물 외곽선 사이 Hausdorff 거리를 씁니다.
 
 ![BG-QVF 구조](docs/figures/fig1_framework.png)
 
@@ -28,17 +30,17 @@ BG-QVF는 IFC 건물 모델을 CityGML 3.0(CityJSON 2.0)으로 옮겨 GIS에 통
 ```
 qvf.py              검사 규칙 16개(P1/P2/P3)와 IFC → CityGML 3.0(CityJSON) 변환기
 e1_analysis.py      E1  공개 건물 IFC 7종 분석(IV장), CityJSON 출력
-e2_mutation.py      E2  결함 주입 실험 M1–M10(V장 1–3절)
+e2_mutation.py      E2  결함 주입 실험 M1–M10(V장 1–2절)
 e2_analyze.py       E2  결과 집계(결함 유형별·검사 구성별·기준 모델별)
-e3_sweep.py         E3  원점 이동·회전 민감도(V장 4절)
-fig_cases.py        그림 3·4 생성
+e3_sweep.py         E3  원점 이동·회전 민감도(V장 3절)
+fig_cases.py        그림 2와 보조 그림(결함 전후 평면) 생성
 extra_checks.py     기본 출력에 저장되지 않는 본문 수치 재현
 e2_rerun_m5.py      기록용(아래 '참고' 참조)
 download_data.py    실험 데이터 9개를 고정 커밋에서 내려받고 SHA-256 확인
 validate_cityjson.py  출력 CityJSON 7개를 공식 스키마(2.0.2)로 검사하고 LoD1 솔리드가 닫혔는지 확인
 viewer_export.py    검증 뷰어용 데이터 추출 → docs/viewer/data/
-out/                실험 원자료(JSON), 변환 결과(*.city.json), 그림 3·4
-docs/figures/       논문 그림 1–4
+out/                실험 원자료(JSON), 변환 결과(*.city.json), 그림 파일
+docs/figures/       논문 그림
 docs/viewer/        검증 뷰어(웹 페이지와 데이터)
 ```
 
@@ -46,17 +48,18 @@ docs/viewer/        검증 뷰어(웹 페이지와 데이터)
 
 | 논문 | 생성 스크립트 | 결과 파일 |
 |---|---|---|
-| 표 4 대표 사례 4종의 품질 프로파일 | e1_analysis.py | out/e1_results.json |
-| 표 B1 7개 모델 전체의 판정 결과 | e1_analysis.py | out/e1_results.json |
-| 그림 3 대표 사례 4종의 변환 결과 | e1_analysis.py → fig_cases.py | out/fig3_cases_3d.png, out/*.city.json |
-| 표 5 주입 결함과 탐지 결과 | e2_mutation.py → e2_analyze.py | out/e2_raw.json → out/e2_summary.json (`by_type`) |
-| 표 6 검사 구성별 탐지율 | e2_analyze.py | out/e2_summary.json (`by_conf`) |
-| 그림 2 공간참조 오류의 민감도 | e3_sweep.py | out/e3_sweep.json |
-| 그림 4 공간참조 결함 전후 평면 | fig_cases.py | out/fig4_georef_faults.png |
-| 본문 보조 수치(병합 메시 R10, τ 민감도, 임계 회전각 등) | extra_checks.py | out/extra_checks.json |
-| 부록 A 코드 A1–A3 | qvf.py, e2_mutation.py | – |
+| 표 3 공개 건물 데이터 7종의 규칙별 판정 결과 | e1_analysis.py | out/e1_results.json |
+| 그림 2 대표 사례 4종의 변환 결과 | e1_analysis.py → fig_cases.py | out/fig3_cases_3d.png, out/*.city.json |
+| 표 4 주입 결함과 탐지 결과 | e2_mutation.py → e2_analyze.py | out/e2_raw.json → out/e2_summary.json (`by_type`) |
+| 표 5 검사 구성별 탐지율 | e2_analyze.py | out/e2_summary.json (`by_conf`) |
+| 그림 3 회전 오류에 따른 위치편차 | e3_sweep.py | out/e3_sweep.json |
+| 그림 4 검증 결과 시각화 서비스 화면 | viewer_export.py | docs/viewer/ |
+| 본문 보조 수치(τ 민감도, 임계 회전각 등) | extra_checks.py | out/extra_checks.json |
+| (보조) 공간참조 결함 전후 평면 | fig_cases.py | out/fig4_georef_faults.png |
 
-그림 1(체계 구조)은 개념도로, 코드로 생성하지 않습니다.
+그림 1(체계 구조)은 개념도로, 코드로 생성하지 않습니다. 결과 파일 이름의 번호(fig3, fig4)는 이전 원고 기준이며, 재현 스크립트와의 호환을 위해 그대로 두었습니다.
+
+`out/e1_results.json`의 `seconds`는 모델별 P1·P2 처리 시간(형상 해석, P1 검사, 변환, P2 검사)이며, 실행 환경에 따라 달라집니다.
 
 ## 실험 데이터
 
