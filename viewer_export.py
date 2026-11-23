@@ -3,7 +3,7 @@
 e1_analysis.py, e2_mutation.py, e3_sweep.py를 실행한 뒤 실행한다.
   python viewer_export.py  →  docs/viewer/data/{summary,B1,B2,B3,B4}.json
 
-- summary.json : 7개 모델 규칙별 판정(E1), 결함×규칙 탐지 행렬과 변이 모델 목록(E2), 민감도(E3), 대표 4종의 평면 윤곽
+- summary.json : 7개 모델 규칙별 판정(E1), 오류×규칙 탐지 행렬과 오류 삽입 모델 목록(E2), 민감도(E3), 대표 4종의 평면 윤곽
 - B?.json      : 대표 모델의 부재별 형상(지도좌표, cm 정수, base64)과 규칙별 표시 정보
 """
 import base64
@@ -100,7 +100,7 @@ for f, r in E1.items():
                    crs=r["crs"], classes=r["classes"], rules=r["results"],
                    bid=next((b for b, p in BASES.items() if p == f), None)))
 
-# ---- E2: 결함 × 규칙
+# ---- E2: 오류 × 규칙
 clean = {r["bid"]: r["res"] for r in E2 if r["mtype"] == "CLEAN" and "res" in r}
 muts = []
 mat = collections.defaultdict(collections.Counter)

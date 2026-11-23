@@ -175,7 +175,7 @@ footer a, .lead a { color: var(--accent); }
   </header>
   <nav class="tabs" aria-label="화면">
     <a href="#models" data-v="models">모델 검사 (E1)</a>
-    <a href="#faults" data-v="faults">결함 주입 (E2)</a>
+    <a href="#faults" data-v="faults">오류 삽입 (E2)</a>
     <a href="#georef" data-v="georef">공간참조 민감도 (E3)</a>
   </nav>
 
@@ -219,24 +219,24 @@ footer a, .lead a { color: var(--accent); }
       <div class="card">
         <div class="card-head">
           <h2>검사 단계를 늘릴수록 탐지율이 오릅니다</h2>
-          <span class="hint">B1–B4에 결함 10종을 넣은 변이 모델 131개</span>
+          <span class="hint">B1–B4에 오류 10종을 넣은 모델 131개</span>
         </div>
         <div class="bars" id="bars"></div>
       </div>
       <div class="card">
         <div class="card-head">
-          <h2>어떤 결함을 어떤 규칙이 잡았나</h2>
-          <span class="hint">칸의 숫자 = 그 규칙이 탐지한 변이 모델 수 · 행을 누르면 변이 모델 목록</span>
+          <h2>어떤 오류를 어떤 규칙이 잡았나</h2>
+          <span class="hint">칸의 숫자 = 그 규칙이 탐지한 오류 삽입 모델 수 · 행을 누르면 오류 삽입 모델 목록</span>
         </div>
         <div class="scroll"><table class="matrix fm" id="fmatrix"></table></div>
         <div class="legend">
-          <span><i style="background:var(--accent)"></i>결함이 겨냥한 주 규칙이 탐지</span>
+          <span><i style="background:var(--accent)"></i>오류가 겨냥한 주 규칙이 탐지</span>
           <span><i style="background:var(--accent-soft)"></i>다른 규칙이 연쇄 탐지</span>
           <span><i style="box-shadow:inset 0 0 0 2px var(--accent)"></i>주 규칙(탐지 못 한 경우 빈 칸)</span>
         </div>
       </div>
       <div class="card" id="mutCard">
-        <h2 id="mutTitle">변이 모델</h2>
+        <h2 id="mutTitle">오류 삽입 모델</h2>
         <div class="scroll"><table class="mt" id="mutTable"></table></div>
       </div>
     </section>
@@ -246,16 +246,16 @@ footer a, .lead a { color: var(--accent); }
       <div class="two">
         <div class="card">
           <div class="card-head">
-            <h2>좌표 결함을 넣어 보기</h2>
+            <h2>좌표 오류를 넣어 보기</h2>
             <div class="chips" id="geoChips" role="group" aria-label="모델 선택"></div>
           </div>
           <div class="ctrl"><label for="shift">원점 이동</label><input id="shift" type="range" min="0" max="2" step="0.01" value="0"><span class="num" id="shiftV"></span></div>
           <div class="ctrl"><label for="rot">진북 회전</label><input id="rot" type="range" min="0" max="2" step="0.01" value="1"><span class="num" id="rotV"></span></div>
           <div class="readout" id="readout"></div>
-          <svg id="plan" viewBox="0 0 560 420" role="img" aria-label="결함 전후 건물 평면"></svg>
+          <svg id="plan" viewBox="0 0 560 420" role="img" aria-label="오류 전후 건물 평면"></svg>
           <div class="legend">
             <span><i style="background:transparent;box-shadow:inset 0 0 0 2px var(--ink)"></i>원래 위치</span>
-            <span><i style="background:var(--fail)"></i>결함 적용 후</span>
+            <span><i style="background:var(--fail)"></i>오류 삽입 후</span>
             <span><i style="background:var(--accent)"></i>회전 중심(지도변환 원점·현장 원점)</span>
           </div>
         </div>
@@ -279,7 +279,7 @@ footer a, .lead a { color: var(--accent); }
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
 "use strict";
-// ---------------------------------------------------------------- 규칙·결함 설명
+// ---------------------------------------------------------------- 규칙·오류 설명
 const RULES = {
   R01: ["IFC 스키마 적합성", "IFC 스키마 검증기로 찾은 오류 수", "오류 0건"],
   R02: ["공간구조 귀속", "층·건물 등 공간구조에 속하지 않은 부재의 비율", "0%"],
@@ -368,7 +368,7 @@ function renderStats() {
   S.e1.forEach(m => Object.values(m.rules).forEach(r => { if (r.passed != null) { n++; if (!r.passed) f++; } }));
   const muts = S.e2.mutants, det = muts.filter(m => m.det.length).length;
   $("#stats").innerHTML = `<span>모델 <b>${S.e1.length}</b>개</span><span>규칙 판정 <b>${n}</b>건 중 불합격 <b>${f}</b>건(${pct(f / n)})</span>` +
-    `<span>변이 모델 <b>${muts.length}</b>개 중 탐지 <b>${det}</b>개(${pct(det / muts.length)})</span><span>위치편차 허용 <b>τ = ${S.th.R14_tau} m</b></span>`;
+    `<span>오류 삽입 모델 <b>${muts.length}</b>개 중 탐지 <b>${det}</b>개(${pct(det / muts.length)})</span><span>위치편차 허용 <b>τ = ${S.th.R14_tau} m</b></span>`;
 }
 
 // ---------------------------------------------------------------- E1 판정표
@@ -457,7 +457,7 @@ function modelLevelText(id, M) {
     case "R04": return r.passed == null ? "IfcMapConversion이 없어 축척을 확인할 수 없습니다(판정 불가). 이 모델은 이미 R03에서 불합격입니다." : `축척/단위 = ${r.value}로 기준 안입니다.`;
     case "R11": if (r.passed == null) return esc(d); return r.value ? `기준을 벗어난 건물: ${esc(JSON.stringify(d))}` : `변환된 LoD1 건물의 높이 ${M.lod1.map(l => (l.z[1] - l.z[0]).toFixed(2) + " m").join(", ")}, 면적과 변환 전후 면적비가 모두 기준 안입니다.`;
     case "R13": return `좌표계 ${M.crs}. 적용 범위 판정: ${esc(d)}`;
-    case "R14": return r.passed == null ? "이 모델에는 비교할 기준자료가 없어 판정할 수 없습니다(판정 불가). 결함 주입 실험(E2)에서는 결함을 추가로 주입하지 않은 기준 모델의 변환 결과를 기준으로 삼아, 주입한 위치 변화를 R14가 탐지하는지 확인했습니다." : `연합 모델이 공유하는 기준객체(geo-reference)의 위치를 다른 모델들의 중앙값과 비교: 편차 ${r.value} m. ${esc(d)}`;
+    case "R14": return r.passed == null ? "이 모델에는 비교할 기준자료가 없어 판정할 수 없습니다(판정 불가). 오류 삽입 실험(E2)에서는 오류를 추가로 삽입하지 않은 기준 모델의 변환 결과를 기준으로 삼아, 삽입한 위치 변화를 R14가 탐지하는지 확인했습니다." : `연합 모델이 공유하는 기준객체(geo-reference)의 위치를 다른 모델들의 중앙값과 비교: 편차 ${r.value} m. ${esc(d)}`;
     case "R15": return r.passed == null ? esc(d) + "." : `같은 현장의 도로·철도 레이어(Infra-Road, Infra-Rail)와 겹치는 면적 ${r.value} m².`;
     case "R16": {
       const names = ["작성 시각", "작성 소프트웨어", "작성자/기관", "좌표계", "길이 단위"];
@@ -649,9 +649,9 @@ function renderE2() {
   const conf = S.e2.by_conf, keys = Object.keys(conf);
   const lab = { "B0 스키마 검증(R01)": "스키마 검증만(R01)", "P1 단독": "P1 원천 BIM", "P1+P2": "P1 + P2 변환", "P1+P2+P3(제안)": "P1 + P2 + P3 (제안)" };
   $("#bars").innerHTML = keys.map((k, i) => { const [d, n] = conf[k]; return `<div class="barrow ${i === keys.length - 1 ? "best" : ""}"><span>${lab[k] || k}</span><div class="track"><div class="fill" style="width:${(d / n * 100).toFixed(1)}%"></div></div><span class="num">${d}/${n} · ${pct(d / n)}</span></div>`; }).join("") +
-    `<p class="hint">P3 통합 검증을 더하면 탐지율이 ${pct((conf[keys[3]][0] - conf[keys[2]][0]) / conf[keys[3]][1])}p 오릅니다. 원점 이동·회전처럼 원본 파일 안에서는 정상으로 보이는 좌표 결함은 지도 위에서 기준자료와 비교해야만 드러납니다.</p>`;
+    `<p class="hint">P3 통합 검증을 더하면 탐지율이 ${pct((conf[keys[3]][0] - conf[keys[2]][0]) / conf[keys[3]][1])}p 오릅니다. 원점 이동·회전처럼 원본 파일 안에서는 정상으로 보이는 좌표 오류는 지도 위에서 기준자료와 비교해야만 드러납니다.</p>`;
   const ids = STAGES.flatMap(s => s[1]);
-  let h = `<thead><tr class="stage"><th class="left" rowspan="2">결함</th><th rowspan="2">탐지</th>` + STAGES.map(([n, r], i) => `<th colspan="${r.length}" class="${i ? "sep-l" : ""}">${n.split(" ")[0]}</th>`).join("") + `</tr><tr>` +
+  let h = `<thead><tr class="stage"><th class="left" rowspan="2">오류</th><th rowspan="2">탐지</th>` + STAGES.map(([n, r], i) => `<th colspan="${r.length}" class="${i ? "sep-l" : ""}">${n.split(" ")[0]}</th>`).join("") + `</tr><tr>` +
     ids.map(id => `<th class="${["R09","R13"].includes(id) ? "sep-l" : ""}" title="${esc(RULES[id][0])}">${id.slice(1)}</th>`).join("") + `</tr></thead><tbody>`;
   Object.entries(FAULTS).forEach(([k, f]) => {
     const t = S.e2.by_type[k]; if (!t) return;
@@ -680,8 +680,8 @@ function renderMutants() {
   const k = state.mut, f = FAULTS[k], t = S.e2.by_type[k], ex = new Set(S.e2.expected[k]);
   document.querySelectorAll("#fmatrix tr[data-m]").forEach(tr => tr.classList.toggle("sel", tr.dataset.m === k));
   const list = S.e2.mutants.filter(m => m.m === k).sort((a, b) => a.bid.localeCompare(b.bid) || (a.rep ?? 0) - (b.rep ?? 0));
-  $("#mutTitle").innerHTML = `${f[0]} ${f[1]} · 변이 모델 ${list.length}개 중 ${t.det}개 탐지 <span class="hint">— ${f[2]}. 주 규칙: ${[...ex].join(", ")}</span>`;
-  $("#mutTable").innerHTML = `<thead><tr><th>기준 모델</th><th>회차</th><th>넣은 결함</th><th>탐지한 규칙</th><th>결과</th></tr></thead><tbody>` +
+  $("#mutTitle").innerHTML = `${f[0]} ${f[1]} · 오류 삽입 모델 ${list.length}개 중 ${t.det}개 탐지 <span class="hint">— ${f[2]}. 주 규칙: ${[...ex].join(", ")}</span>`;
+  $("#mutTable").innerHTML = `<thead><tr><th>기준 모델</th><th>회차</th><th>넣은 오류</th><th>탐지한 규칙</th><th>결과</th></tr></thead><tbody>` +
     list.map(m => `<tr><td><span class="bid">${m.bid}</span>${MODELS[m.bid][1]}</td><td class="num">${m.rep ?? ""}</td><td>${esc(logText(m))}</td>` +
       `<td>${m.det.length ? m.det.map(r => `<span class="tag ${ex.has(r) ? "main" : ""}" title="${esc(RULES[r][0])}">${r}</span>`).join("") : "–"}</td>` +
       `<td><span class="pill ${m.det.length ? "P" : "F"}">${m.det.length ? "탐지" : "놓침"}</span></td></tr>`).join("") + `</tbody>` +

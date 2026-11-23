@@ -11,7 +11,7 @@ BG-QVF는 IFC 건물 모델을 CityGML 3.0(CityJSON 2.0)으로 옮겨 GIS에 통
 | P2 변환 검증 | 의미 매핑률, 솔리드 유효성, 형상 타당 범위, 식별자 연계 | R09–R12 |
 | P3 통합 검증 | 좌표계 적용범위, 기준자료 대비 위치편차, 기존 레이어와의 중첩, 메타데이터 | R13–R16 |
 
-R14(위치편차)는 기준자료의 종류에 따라 두 방법으로 측정합니다. E1의 buildingSMART 분야 모델 4개는 공통 기준객체 중심의 평면 위치를 연합모델 중앙값과 비교하고, E2·E3는 기준 모델과 변이 모델의 건물 외곽선 사이 Hausdorff 거리를 씁니다.
+R14(위치편차)는 기준자료의 종류에 따라 두 방법으로 측정합니다. E1의 buildingSMART 분야 모델 4개는 공통 기준객체 중심의 평면 위치를 연합모델 중앙값과 비교하고, E2·E3는 기준 모델과 오류 삽입 모델의 건물 외곽선 사이 Hausdorff 거리를 씁니다.
 
 ![BG-QVF 구조](docs/figures/fig1_framework.png)
 
@@ -20,7 +20,7 @@ R14(위치편차)는 기준자료의 종류에 따라 두 방법으로 측정합
 **https://0613jihui.github.io/bim-gis-quality-verification/viewer/** 에서 설치 없이 실험 결과를 볼 수 있습니다.
 
 - 모델 검사(E1): 7개 모델 × 16개 규칙 판정표, 대표 모델 B1–B4의 3D 부재별 판정(어느 부재가 어떤 규칙에 걸렸는지)과 GIS 변환 결과(LoD1) 비교
-- 결함 주입(E2): 검사 단계별 탐지율, 결함 10종 × 규칙 16개 탐지 행렬, 변이 모델 131개의 결함 내용과 탐지 규칙
+- 오류 삽입(E2): 검사 단계별 탐지율, 오류 10종 × 규칙 16개 탐지 행렬, 오류 삽입 모델 131개의 오류 내용과 탐지 규칙
 - 공간참조 민감도(E3): 원점 이동·진북 회전을 직접 넣어 보며 위치편차(R14)를 계산하는 평면도와 회전각별 편차 그래프
 
 뷰어 데이터(`docs/viewer/data/`)는 실험을 마친 뒤 `python viewer_export.py`로 다시 만들 수 있습니다.
@@ -30,10 +30,10 @@ R14(위치편차)는 기준자료의 종류에 따라 두 방법으로 측정합
 ```
 qvf.py              검사 규칙 16개(P1/P2/P3)와 IFC → CityGML 3.0(CityJSON) 변환기
 e1_analysis.py      E1  공개 건물 IFC 7종 분석(IV장), CityJSON 출력
-e2_mutation.py      E2  결함 주입 실험 M1–M10(V장 1–2절)
-e2_analyze.py       E2  결과 집계(결함 유형별·검사 구성별·기준 모델별)
+e2_mutation.py      E2  오류 삽입 실험 M1–M10(V장 1–2절)
+e2_analyze.py       E2  결과 집계(오류 유형별·검사 구성별·기준 모델별)
 e3_sweep.py         E3  원점 이동·회전 민감도(V장 3절)
-fig_cases.py        그림 2와 보조 그림(결함 전후 평면) 생성
+fig_cases.py        그림 2와 보조 그림(오류 전후 평면) 생성
 extra_checks.py     기본 출력에 저장되지 않는 본문 수치 재현
 e2_rerun_m5.py      기록용(아래 '참고' 참조)
 download_data.py    실험 데이터 9개를 고정 커밋에서 내려받고 SHA-256 확인
@@ -50,12 +50,12 @@ docs/viewer/        검증 뷰어(웹 페이지와 데이터)
 |---|---|---|
 | 표 3 공개 건물 데이터 7종의 규칙별 판정 결과 | e1_analysis.py | out/e1_results.json |
 | 그림 2 대표 사례 4종의 변환 결과 | e1_analysis.py → fig_cases.py | out/fig3_cases_3d.png, out/*.city.json |
-| 표 4 주입 결함과 탐지 결과 | e2_mutation.py → e2_analyze.py | out/e2_raw.json → out/e2_summary.json (`by_type`) |
+| 표 4 삽입 오류와 탐지 결과 | e2_mutation.py → e2_analyze.py | out/e2_raw.json → out/e2_summary.json (`by_type`) |
 | 표 5 검사 구성별 탐지율 | e2_analyze.py | out/e2_summary.json (`by_conf`) |
 | 그림 3 회전 오류에 따른 위치편차 | e3_sweep.py | out/e3_sweep.json |
 | 그림 4 검증 결과 시각화 서비스 화면 | viewer_export.py | docs/viewer/ |
 | 본문 보조 수치(τ 민감도, 임계 회전각 등) | extra_checks.py | out/extra_checks.json |
-| (보조) 공간참조 결함 전후 평면 | fig_cases.py | out/fig4_georef_faults.png |
+| (보조) 공간참조 오류 전후 평면 | fig_cases.py | out/fig4_georef_faults.png |
 
 그림 1(체계 구조)은 개념도로, 코드로 생성하지 않습니다. 결과 파일 이름의 번호(fig3, fig4)는 이전 원고 기준이며, 재현 스크립트와의 호환을 위해 그대로 두었습니다.
 
@@ -67,13 +67,13 @@ docs/viewer/        검증 뷰어(웹 페이지와 데이터)
 
 | 기호 | 파일 | 출처 | 역할 |
 |---|---|---|---|
-| B1 | Building-Architecture.ifc | buildingSMART Sample-Test-Files, IFC 4.3.2.0 Simple-Scene (CC BY 4.0) | 분석·결함 주입 |
-| B2 | Building-Structural.ifc | 〃 | 분석·결함 주입 |
+| B1 | Building-Architecture.ifc | buildingSMART Sample-Test-Files, IFC 4.3.2.0 Simple-Scene (CC BY 4.0) | 분석·오류 삽입 |
+| B2 | Building-Structural.ifc | 〃 | 분석·오류 삽입 |
 | – | Building-Hvac.ifc, Building-Landscaping.ifc | 〃 | 분석 |
 | – | Infra-Road.ifc, Infra-Rail.ifc | 〃 | R15 비교용 기존 도로·철도 레이어(분석 대상 아님) |
-| B3 | AC11-FZK-Haus-IFC.ifc | opensourceBIM TestFiles, TestData/data | 분석·결함 주입 |
+| B3 | AC11-FZK-Haus-IFC.ifc | opensourceBIM TestFiles, TestData/data | 분석·오류 삽입 |
 | – | AC11-Institute-Var-2-IFC.ifc | 〃 | 분석 |
-| B4 | AC-20-Smiley-West-10-Bldg_fix.ifc | 〃 | 분석·결함 주입 |
+| B4 | AC-20-Smiley-West-10-Bldg_fix.ifc | 〃 | 분석·오류 삽입 |
 
 - buildingSMART: https://github.com/buildingSMART/Sample-Test-Files (commit `5030f65`)
 - opensourceBIM: https://github.com/opensourceBIM/TestFiles (commit `2fdf948`). 라이선스가 명시되어 있지 않아 원본 IFC는 이 저장소에 넣지 않았습니다.
@@ -91,7 +91,7 @@ python download_data.py                                # bs43/, osb/ 폴더 생�
 
 python e1_analysis.py      # 약 2분
 python validate_cityjson.py # 출력 파일 적합성 확인(CityJSON 공식 스키마를 내려받음)
-python e2_mutation.py      # 가장 오래 걸림(131개 변이 모델). B1,B2처럼 기준 모델만 지정해 다시 실행 가능
+python e2_mutation.py      # 가장 오래 걸림(131개 오류 삽입 모델). B1,B2처럼 기준 모델만 지정해 다시 실행 가능
 python e2_analyze.py
 python e3_sweep.py
 python fig_cases.py
@@ -108,12 +108,12 @@ ifcopenshell 0.9.0, shapely 2.2, trimesh 5.2, pyproj 3.8(PROJ 9.8), mapbox_earcu
 ## 주요 결과 요약
 
 - E1: 7개 모델 × 16개 규칙 112개 조합 중 98건을 판정, 20건(20.4%) 불합격. 나머지 14건은 해당 없음 5건(검사 대상이 없음), 판정 불가 9건(필요한 자료가 없음)
-- E2: 변이 모델 131개 중 109개(83.2%) 탐지. 스키마 검증만으로는 13.7%, P3 통합 검증 추가로 +25.2%p
+- E2: 오류 삽입 모델 131개 중 109개(83.2%) 탐지. 스키마 검증만으로는 13.7%, P3 통합 검증 추가로 +25.2%p
 - E3: 1° 회전 시 위치 편차 B1 0.21 m, B4 1.32 m. τ = 0.20 m 기준 임계 회전각은 0.15–1.16°
 
 ## 참고
 
-결함 M5(분류 손실)는 초기 실행에서 재분류 후 기존 PredefinedType이 남아 스키마 위반이 함께 발생했습니다.
+오류 M5(분류 손실)는 초기 실행에서 재분류 후 기존 PredefinedType이 남아 스키마 위반이 함께 발생했습니다.
 PredefinedType을 정리하도록 `e2_mutation.py`를 고친 뒤 M5만 다시 실행했으며, `out/e2_raw.json`과 논문 수치는 수정 후 결과입니다.
 `e2_rerun_m5.py`는 그 재실행 과정을 남긴 기록용 스크립트입니다.
 
