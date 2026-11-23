@@ -112,6 +112,19 @@ ifcopenshell 0.9.0, shapely 2.2, trimesh 5.2, pyproj 3.8(PROJ 9.8), mapbox_earcu
 PredefinedType을 정리하도록 `e2_mutation.py`를 고친 뒤 M5만 다시 실행했으며, `out/e2_raw.json`과 논문 수치는 수정 후 결과입니다.
 `e2_rerun_m5.py`는 그 재실행 과정을 남긴 기록용 스크립트입니다.
 
+## 사용한 오픈소스
+
+| 도구 | 버전 | 용도 | 인용 |
+|---|---|---|---|
+| [IfcOpenShell](https://ifcopenshell.org) | 0.9.0 | IFC 읽기, 형상 삼각망화, 스키마 검증 | 논문 [32] |
+| [Shapely](https://github.com/shapely/shapely) | 2.2 | 평면 윤곽, 중첩, Hausdorff 거리 | [33] |
+| [trimesh](https://trimesh.org) | 5.2 | 솔리드 유효성, LoD1 압출 | [34] |
+| [pyproj](https://pyproj4.github.io/pyproj/) / [PROJ](https://proj.org) | 3.8 / 9.8 | 좌표 변환 (PROJ DOI: 10.5281/zenodo.5884394) | [35] [36] |
+| [NumPy](https://numpy.org) | 2.5 | 수치 계산 | [37] |
+| [Matplotlib](https://matplotlib.org) | 3.11 | 그림 2·4 | [38] |
+| [three.js](https://threejs.org) | r128 | 검증 뷰어의 3D 표시 | [39] |
+| [CityJSON](https://www.cityjson.org) | 2.0 | 변환 결과 형식 | [31] |
+
 ## 라이선스
 
 이 저장소의 코드와 문서는 [MIT 라이선스](LICENSE)를 따릅니다.
