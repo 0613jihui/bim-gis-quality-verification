@@ -13,6 +13,16 @@ BG-QVF는 IFC 건물 모델을 CityGML 3.0(CityJSON 2.0)으로 옮겨 GIS에 통
 
 ![BG-QVF 구조](docs/figures/fig1_framework.png)
 
+## 검증 뷰어
+
+**https://0613jihui.github.io/bim-gis-quality-verification/viewer/** 에서 설치 없이 실험 결과를 볼 수 있습니다.
+
+- 모델 검사(E1): 7개 모델 × 16개 규칙 판정표, 대표 모델 B1–B4의 3D 부재별 판정(어느 부재가 어떤 규칙에 걸렸는지)과 GIS 변환 결과(LoD1) 비교
+- 결함 주입(E2): 검사 단계별 탐지율, 결함 10종 × 규칙 16개 탐지 행렬, 변이 모델 131개의 결함 내용과 탐지 규칙
+- 공간참조 민감도(E3): 원점 이동·진북 회전을 직접 넣어 보며 위치편차(R14)를 계산하는 평면도와 회전각별 편차 그래프
+
+뷰어 데이터(`docs/viewer/data/`)는 실험을 마친 뒤 `python viewer_export.py`로 다시 만들 수 있습니다.
+
 ## 폴더 구성
 
 ```
@@ -25,8 +35,10 @@ fig_cases.py        그림 3·4 생성
 extra_checks.py     기본 출력에 저장되지 않는 본문 수치 재현
 e2_rerun_m5.py      기록용(아래 '참고' 참조)
 download_data.py    실험 데이터 9개를 고정 커밋에서 내려받고 SHA-256 확인
+viewer_export.py    검증 뷰어용 데이터 추출 → docs/viewer/data/
 out/                실험 원자료(JSON), 변환 결과(*.city.json), 그림 3·4
 docs/figures/       논문 그림 1–4
+docs/viewer/        검증 뷰어(웹 페이지와 데이터)
 ```
 
 ## 논문 표·그림과 파일의 대응

@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BG-QVF 검증 뷰어</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* 측량 도면 같은 차분한 바탕에 지도 청색 하나, 판정은 통과·불합격·해당없음 세 가지 상태색으로만 표시.
+   레이아웃: 위에서 요약(판정표) → 아래에서 상세(3D와 규칙 패널) */
+:root {
+  --bg: #f3f5f6;
+  --surface: #ffffff;
+  --ink: #14202a;
+  --muted: #5a6a77;
+  --line: #d8dfe4;
+  --accent: #1d5c88;
+  --accent-soft: #e3eef6;
+  --pass: #2e8a57;
+  --fail: #c63f37;
+  --na: #97a3ad;
+  --pass-soft: #e2f2e8;
+  --fail-soft: #fbe6e4;
+  --na-soft: #eef1f3;
+  --canvas: #eef2f4;
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e151b; --surface: #151f27; --ink: #e4ebf0; --muted: #94a4b1; --line: #2a3843;
+    --accent: #5fa8d8; --accent-soft: #1b2d3b; --pass: #4cbc80; --fail: #ee6b61; --na: #6c7a86;
+    --pass-soft: #173026; --fail-soft: #3a1d1b; --na-soft: #1c262e; --canvas: #111a21;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e151b; --surface: #151f27; --ink: #e4ebf0; --muted: #94a4b1; --line: #2a3843;
+  --accent: #5fa8d8; --accent-soft: #1b2d3b; --pass: #4cbc80; --fail: #ee6b61; --na: #6c7a86;
+  --pass-soft: #173026; --fail-soft: #3a1d1b; --na-soft: #1c262e; --canvas: #111a21;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 400 14px/1.55 var(--font-body); }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 20px; }
+header.top { padding: 22px 0 10px; display: grid; gap: 6px; }
+h1 { font-size: 22px; line-height: 1.3; margin: 0; font-weight: 700; text-wrap: balance; }
+h2 { font-size: 16px; margin: 0; font-weight: 700; text-wrap: balance; }
+h3 { font-size: 14px; margin: 0; font-weight: 700; }
+p { margin: 0; }
+.lead { color: var(--muted); max-width: 70ch; }
+.mono, .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 6px; color: var(--muted); font-size: 13px; }
+.stats b { color: var(--ink); font-family: var(--font-mono); font-weight: 500; }
+nav.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-top: 12px; overflow-x: auto; }
+nav.tabs a { padding: 10px 14px; color: var(--muted); text-decoration: none; border-bottom: 2px solid transparent; white-space: nowrap; font-weight: 500; }
+nav.tabs a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); }
+nav.tabs a:focus-visible, button:focus-visible, .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+main section { display: none; padding: 18px 0 32px; gap: 16px; }
+main section.on { display: grid; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+.hint { color: var(--muted); font-size: 12.5px; }
+.scroll { overflow-x: auto; }
+button { font: inherit; color: inherit; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--surface); padding: 5px 11px; border-radius: 999px; cursor: pointer; font-size: 13px; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; background: var(--surface); padding: 5px 11px; cursor: pointer; font-size: 13px; border-right: 1px solid var(--line); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+.pill { display: inline-block; min-width: 46px; text-align: center; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 500; }
+.pill.P { background: var(--pass-soft); color: var(--pass); }
+.pill.F { background: var(--fail-soft); color: var(--fail); }
+.pill.N { background: var(--na-soft); color: var(--na); }
+
+/* 판정표 */
+table { border-collapse: collapse; width: 100%; }
+.matrix th, .matrix td { border-bottom: 1px solid var(--line); padding: 6px 4px; text-align: center; font-size: 12.5px; }
+.matrix th.left, .matrix td.left { text-align: left; padding-left: 8px; white-space: nowrap; }
+.matrix thead th { color: var(--muted); font-weight: 500; font-family: var(--font-mono); font-size: 11.5px; }
+.matrix thead tr.stage th { font-family: var(--font-body); color: var(--ink); font-size: 12px; border-bottom: 2px solid var(--line); }
+.matrix tbody tr { cursor: default; }
+.matrix tbody tr.pick { cursor: pointer; }
+.matrix tbody tr.pick:hover td { background: var(--accent-soft); }
+.matrix tbody tr.sel td { background: var(--accent-soft); }
+.matrix td.c { cursor: pointer; width: 34px; }
+.dot { display: inline-block; width: 18px; height: 18px; line-height: 18px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+.dot.P { background: var(--pass-soft); color: var(--pass); }
+.dot.F { background: var(--fail); color: #fff; }
+.dot.N { color: var(--na); }
+.matrix td.cur .dot { outline: 2px solid var(--accent); outline-offset: 1px; }
+.bid { display: inline-block; font-family: var(--font-mono); font-size: 11.5px; padding: 0 6px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); margin-right: 6px; }
+.sep-l { border-left: 2px solid var(--line); }
+
+/* 3D + 규칙 패널 */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 16px; align-items: start; }
+@media (max-width: 980px) { .split { grid-template-columns: 1fr; } }
+.viewer { position: relative; height: 560px; border-radius: 6px; overflow: hidden; background: var(--canvas); border: 1px solid var(--line); }
+.viewer canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.viewer .msg { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); padding: 20px; text-align: center; }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.12); max-width: 320px; display: none; }
+.tip .mono { font-size: 11px; color: var(--muted); }
+.vbar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--muted); }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.rules { display: grid; gap: 2px; }
+.stage-h { font-size: 12px; color: var(--muted); padding: 8px 0 2px; font-weight: 500; border-bottom: 1px solid var(--line); }
+.rule { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 6px 6px; border: 0; background: transparent; text-align: left; border-radius: 5px; cursor: pointer; width: 100%; }
+.rule:hover { background: var(--na-soft); }
+.rule[aria-pressed="true"] { background: var(--accent-soft); }
+.rule .id { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.rule .nm { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rule .val { font-family: var(--font-mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.detail { border: 1px solid var(--line); border-left: 4px solid var(--na); border-radius: 6px; padding: 12px; display: grid; gap: 8px; }
+.detail.F { border-left-color: var(--fail); }
+.detail.P { border-left-color: var(--pass); }
+.kv { display: grid; grid-template-columns: 84px 1fr; gap: 3px 10px; font-size: 13px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; }
+.ellist { max-height: 210px; overflow: auto; border-top: 1px solid var(--line); }
+.ellist button { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 8px; align-items: center; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line); background: transparent; padding: 5px 2px; cursor: pointer; font-size: 12.5px; }
+.ellist button:hover, .ellist button.on { background: var(--accent-soft); }
+.ellist i { width: 10px; height: 10px; border-radius: 2px; }
+.ellist small { display: block; color: var(--muted); font-family: var(--font-mono); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* E2 */
+.bars { display: grid; gap: 8px; }
+.barrow { display: grid; grid-template-columns: 170px minmax(0, 1fr) 140px; gap: 10px; align-items: center; font-size: 13px; }
+.barrow .track { height: 18px; background: var(--na-soft); border-radius: 3px; position: relative; }
+.barrow .fill { height: 100%; border-radius: 3px; background: var(--na); }
+.barrow.best .fill { background: var(--accent); }
+.barrow .num { text-align: right; }
+.fm td.c { width: 36px; font-family: var(--font-mono); font-size: 12px; }
+.fm td.c span { display: inline-block; min-width: 24px; padding: 1px 0; border-radius: 4px; }
+.fm td.c.exp span { box-shadow: inset 0 0 0 2px var(--accent); }
+.fm td.c.hit span { background: var(--accent); color: #fff; }
+.fm td.c.casc span { background: var(--accent-soft); color: var(--accent); }
+.fm td.c.exp:not(.hit) span { color: var(--muted); }
+.fm .rate { font-family: var(--font-mono); white-space: nowrap; }
+.mt { font-size: 12.5px; }
+.mt td, .mt th { border-bottom: 1px solid var(--line); padding: 5px 6px; text-align: left; vertical-align: top; }
+.mt th { color: var(--muted); font-weight: 500; }
+.tag { display: inline-block; font-family: var(--font-mono); font-size: 11px; padding: 0 5px; border-radius: 3px; margin: 1px 2px 1px 0; background: var(--accent-soft); color: var(--accent); }
+.tag.main { background: var(--accent); color: #fff; }
+
+/* E3 */
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 980px) { .two { grid-template-columns: 1fr; } }
+.ctrl { display: grid; grid-template-columns: 110px minmax(0, 1fr) 76px; gap: 10px; align-items: center; font-size: 13px; }
+.ctrl input[type="range"] { width: 100%; accent-color: var(--accent); }
+.readout { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 10px 12px; border-radius: 6px; background: var(--na-soft); }
+.readout .big { font-family: var(--font-mono); font-size: 22px; font-weight: 500; }
+svg text { font-family: var(--font-body); }
+svg .ax { stroke: var(--line); }
+svg .lbl { fill: var(--muted); font-size: 11px; }
+footer { color: var(--muted); font-size: 12.5px; padding: 6px 0 28px; border-top: 1px solid var(--line); }
+footer a, .lead a { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>BG-QVF 검증 뷰어</h1>
+    <p class="lead">건물 IFC 모델을 CityGML 3.0으로 옮겨 GIS에 통합할 때, 16개 규칙으로 무엇을 검사했고 어디서 걸렸는지 보여 줍니다. 논문 「건축물 BIM–GIS 연계 데이터의 단계별 품질 검증 체계 설계 및 결함 주입 기반 실증」의 실험 결과입니다.</p>
+    <div class="stats" id="stats"></div>
+  </header>
+  <nav class="tabs" aria-label="화면">
+    <a href="#models" data-v="models">모델 검사 (E1)</a>
+    <a href="#faults" data-v="faults">결함 주입 (E2)</a>
+    <a href="#georef" data-v="georef">공간참조 민감도 (E3)</a>
+  </nav>
+
+  <main>
+    <!-- E1 -->
+    <section id="v-models" class="on">
+      <div class="card">
+        <div class="card-head">
+          <h2>공개 건물 모델 7개의 규칙별 판정</h2>
+          <span class="hint">대표 모델(B1–B4) 행이나 칸을 누르면 아래에서 3D로 봅니다</span>
+        </div>
+        <div class="scroll"><table class="matrix" id="e1matrix"></table></div>
+        <div class="legend"><span><span class="dot P">✓</span> 통과</span><span><span class="dot F">✕</span> 불합격</span><span><span class="dot N">–</span> 해당없음</span></div>
+      </div>
+      <div class="split">
+        <div class="card">
+          <div class="vbar">
+            <div class="chips" id="modelChips" role="group" aria-label="모델 선택"></div>
+            <div class="seg" id="layerSeg" role="group" aria-label="표시 대상">
+              <button type="button" data-l="bim" aria-pressed="true">BIM 부재</button>
+              <button type="button" data-l="both" aria-pressed="false">겹쳐 보기</button>
+              <button type="button" data-l="gis" aria-pressed="false">GIS LoD1</button>
+            </div>
+          </div>
+          <div class="viewer" id="viewer"><div class="msg" id="vmsg">3D 모델을 불러오는 중…</div><div class="tip" id="tip"></div></div>
+          <div class="vbar">
+            <div class="legend" id="legend"></div>
+            <span class="hint">끌어서 회전 · 휠로 확대 · 부재에 마우스를 올리면 정보</span>
+          </div>
+          <p class="hint" id="modelNote"></p>
+        </div>
+        <div class="card">
+          <div class="detail" id="detail"></div>
+          <div class="rules" id="rules"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- E2 -->
+    <section id="v-faults">
+      <div class="card">
+        <div class="card-head">
+          <h2>검사 단계를 늘릴수록 탐지율이 오릅니다</h2>
+          <span class="hint">B1–B4에 결함 10종을 넣은 변이 모델 131개</span>
+        </div>
+        <div class="bars" id="bars"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2>어떤 결함을 어떤 규칙이 잡았나</h2>
+          <span class="hint">칸의 숫자 = 그 규칙이 탐지한 변이 모델 수 · 행을 누르면 변이 모델 목록</span>
+        </div>
+        <div class="scroll"><table class="matrix fm" id="fmatrix"></table></div>
+        <div class="legend">
+          <span><i style="background:var(--accent)"></i>결함이 겨냥한 주 규칙이 탐지</span>
+          <span><i style="background:var(--accent-soft)"></i>다른 규칙이 연쇄 탐지</span>
+          <span><i style="box-shadow:inset 0 0 0 2px var(--accent)"></i>주 규칙(탐지 못 한 경우 빈 칸)</span>
+        </div>
+      </div>
+      <div class="card" id="mutCard">
+        <h2 id="mutTitle">변이 모델</h2>
+        <div class="scroll"><table class="mt" id="mutTable"></table></div>
+      </div>
+    </section>
+
+    <!-- E3 -->
+    <section id="v-georef">
+      <div class="two">
+        <div class="card">
+          <div class="card-head">
+            <h2>좌표 결함을 넣어 보기</h2>
+            <div class="chips" id="geoChips" role="group" aria-label="모델 선택"></div>
+          </div>
+          <div class="ctrl"><label for="shift">원점 이동</label><input id="shift" type="range" min="0" max="2" step="0.01" value="0"><span class="num" id="shiftV"></span></div>
+          <div class="ctrl"><label for="rot">진북 회전</label><input id="rot" type="range" min="0" max="2" step="0.01" value="1"><span class="num" id="rotV"></span></div>
+          <div class="readout" id="readout"></div>
+          <svg id="plan" viewBox="0 0 560 420" role="img" aria-label="결함 전후 건물 평면"></svg>
+          <div class="legend">
+            <span><i style="background:transparent;box-shadow:inset 0 0 0 2px var(--ink)"></i>원래 위치</span>
+            <span><i style="background:var(--fail)"></i>결함 적용 후</span>
+            <span><i style="background:var(--accent)"></i>회전 중심(지도변환 원점·현장 원점)</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h2>같은 회전각이라도 건물이 클수록 크게 어긋납니다</h2>
+          </div>
+          <svg id="sens" viewBox="0 0 560 380" role="img" aria-label="회전각에 따른 위치편차"></svg>
+          <p class="hint" id="sensNote"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    코드·데이터: <a href="https://github.com/0613jihui/bim-gis-quality-verification">github.com/0613jihui/bim-gis-quality-verification</a> (커밋 4205001의 out/ 결과에서 viewer_export.py로 추출)
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+"use strict";
+// ---------------------------------------------------------------- 규칙·결함 설명
+const RULES = {
+  R01: ["IFC 스키마 적합성", "IFC 스키마 검증기로 찾은 오류 수", "오류 0건"],
+  R02: ["공간구조 귀속", "층·건물 등 공간구조에 속하지 않은 부재의 비율", "0%"],
+  R03: ["LoGeoRef 수준", "모델이 가진 공간참조 정보의 수준(10 주소 · 20 위경도 · 30 현장 원점 · 40 진북 · 50 지도변환+좌표계)", "50 이상"],
+  R04: ["지도변환 축척·단위", "IfcMapConversion 축척 S를 길이 단위 u로 나눈 값", "|S/u − 1| ≤ 0.001"],
+  R05: ["일반객체(Proxy) 비율", "분류 없이 IfcBuildingElementProxy로 내보낸 부재의 비율", "10% 이하"],
+  R06: ["외피 속성(IsExternal)", "벽·슬래브·지붕·창·문 중 IsExternal 속성을 가진 부재의 비율", "95% 이상"],
+  R07: ["형상 삼각망화", "형상을 삼각망으로 해석할 수 있는 부재의 비율", "100%"],
+  R08: ["GlobalId 유일성", "중복된 IFC 식별자(GlobalId) 수", "0건"],
+  R09: ["CityGML 의미 매핑률", "CityGML 3.0의 구체적인 클래스로 옮겨진 부재의 비율(나머지는 GenericCityObject)", "90% 이상"],
+  R10: ["솔리드 유효성", "솔리드 형상 부재 중 닫힌 유효 솔리드의 비율, 그리고 LoD1 건물 덩어리의 유효성", "95% 이상 + LoD1 유효"],
+  R11: ["변환 형상 타당성", "변환된 건물의 높이·면적·변환 전후 면적비", "높이 0.5–1000 m, 면적 1–10⁶ m², 면적비 ±0.2%"],
+  R12: ["식별자 연계", "BIM 식별자를 CityGML 객체로 옮길 때 중복·누락 수", "0건"],
+  R13: ["좌표계 적용범위", "변환된 건물이 지정한 좌표계(EPSG)의 적용 범위 안에 있는지", "범위 안"],
+  R14: ["위치편차", "기준자료 대비 건물 평면의 Hausdorff 거리(최대 어긋남)", "0.20 m 이하"],
+  R15: ["시설물 간 중첩", "건물 평면이 기존 도로·철도 레이어와 겹치는 면적", "1 m² 이하"],
+  R16: ["메타데이터 완전성", "작성 시각 · 작성 소프트웨어 · 작성자/기관 · 좌표계 · 길이 단위 5개 항목", "5개 모두"],
+};
+const STAGES = [["P1 원천 BIM 검증", ["R01","R02","R03","R04","R05","R06","R07","R08"]],
+                ["P2 변환 검증", ["R09","R10","R11","R12"]],
+                ["P3 통합 검증", ["R13","R14","R15","R16"]]];
+const FAULTS = {
+  M1_GEO_DEL: ["M1", "좌표참조 삭제", "IfcMapConversion·좌표계 또는 위경도를 지움"],
+  M2_GEO_SHIFT: ["M2", "원점 1 m 이동", "지도변환 원점(또는 위경도)을 임의 방향으로 1 m 옮김"],
+  M3_GEO_ROT: ["M3", "진북 1° 회전", "지도변환 축 방향(또는 진북)을 ±1° 돌림"],
+  M4_SCALE: ["M4", "축척·단위 오류", "축척을 1000배로, 또는 길이 단위를 mm↔m로 바꿈"],
+  M5_CLASS: ["M5", "분류 손실", "부재의 30%를 IfcBuildingElementProxy로 바꿈"],
+  M6_PROP: ["M6", "외피 속성 삭제", "외피 부재 30%의 IsExternal 속성을 지움"],
+  M7_CONTAIN: ["M7", "공간구조 귀속 해제", "부재 30%를 층·건물 소속에서 뺌"],
+  M8_GUID: ["M8", "식별자 중복", "부재 둘의 GlobalId를 같게 만듦"],
+  M9_GEOM: ["M9", "형상 손상", "솔리드의 면 하나를 지움"],
+  M10_CRS: ["M10", "좌표계 오지정", "좌표계 이름을 EPSG:5186(한국 중부원점)으로 바꿈"],
+};
+const MODELS = {
+  B1: ["B1", "단독주택 · 건축 모델", "Building-Architecture.ifc"],
+  B2: ["B2", "단독주택 · 구조 모델", "Building-Structural.ifc"],
+  B3: ["B3", "FZK-Haus 주택", "AC11-FZK-Haus-IFC.ifc"],
+  B4: ["B4", "Smiley West 연립 건물", "AC-20-Smiley-West-10-Bldg_fix.ifc"],
+};
+const CLASS_COL = { BuildingConstructiveElement: "#8ea6b8", BuildingInstallation: "#b39a6a", BuildingFurniture: "#b79bc4", GenericCityObject: "#e38a3b" };
+const CLASS_KO = { BuildingConstructiveElement: "구조·외피 부재", BuildingInstallation: "설비", BuildingFurniture: "가구", GenericCityObject: "매핑 실패(Generic)" };
+const ST_COL = { bad: "#d4473d", good: "#a9d3b6", na: "#dde2e6", sel: "#f0b429" };
+const ELEMENT_RULES = new Set(["R02","R05","R06","R07","R08","R09","R10","R12"]);
+
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const pct = v => (v * 100).toFixed(1).replace(/\.0$/, "") + "%";
+const st = r => r == null || r.passed == null ? "N" : r.passed ? "P" : "F";
+const stKo = { P: "통과", F: "불합격", N: "해당없음" };
+
+function fmtVal(id, r) {
+  if (!r || r.passed == null) return "–";
+  const v = r.value, d = r.detail;
+  switch (id) {
+    case "R01": case "R08": case "R12": return `${v}건`;
+    case "R02": case "R05": return pct(v);
+    case "R03": return `LoGeoRef ${v}`;
+    case "R04": return `S/u = ${v}`;
+    case "R06": case "R07": case "R09": return d;
+    case "R10": return v == null ? "LoD1만" : pct(v);
+    case "R11": return `${v}건`;
+    case "R13": return v ? "범위 안" : "범위 밖";
+    case "R14": return v == null ? "계산 불가" : `${v} m`;
+    case "R15": return `${v} m²`;
+    case "R16": return `${Math.round(v * 5)}/5`;
+  }
+  return String(v);
+}
+
+// ---------------------------------------------------------------- 데이터
+let S = null;
+const cache = {};
+const state = { bid: "B1", rule: null, layer: "bim", el: null, geo: "B1", mut: "M3_GEO_ROT" };
+
+fetch("data/summary.json").then(r => r.json()).then(d => {
+  S = d;
+  renderStats(); renderE1Matrix(); renderChips(); renderE2(); renderE3Chips(); renderE3();
+  route();
+  loadModel(state.bid);
+}).catch(err => {
+  document.querySelector("main").insertAdjacentHTML("afterbegin", `<p class="card">결과 데이터를 불러오지 못했습니다(data/summary.json). 저장소의 docs/viewer 폴더를 웹 서버로 열어 주세요. ${esc(err)}</p>`);
+});
+
+function renderStats() {
+  let n = 0, f = 0;
+  S.e1.forEach(m => Object.values(m.rules).forEach(r => { if (r.passed != null) { n++; if (!r.passed) f++; } }));
+  const muts = S.e2.mutants, det = muts.filter(m => m.det.length).length;
+  $("#stats").innerHTML = `<span>모델 <b>${S.e1.length}</b>개</span><span>규칙 판정 <b>${n}</b>건 중 불합격 <b>${f}</b>건(${pct(f / n)})</span>` +
+    `<span>변이 모델 <b>${muts.length}</b>개 중 탐지 <b>${det}</b>개(${pct(det / muts.length)})</span><span>위치편차 허용 <b>τ = ${S.th.R14_tau} m</b></span>`;
+}
+
+// ---------------------------------------------------------------- E1 판정표
+function renderE1Matrix() {
+  const ids = STAGES.flatMap(s => s[1]);
+  let h = `<thead><tr class="stage"><th class="left" rowspan="2">모델</th><th rowspan="2">스키마</th><th rowspan="2">부재</th>` +
+    STAGES.map(([n, r], i) => `<th colspan="${r.length}" class="${i ? "sep-l" : ""}">${n}</th>`).join("") + `<th rowspan="2">통과/판정</th></tr><tr>` +
+    ids.map(id => `<th class="${["R09","R13"].includes(id) ? "sep-l" : ""}" title="${esc(RULES[id][0])}">${id.slice(1)}</th>`).join("") + `</tr></thead><tbody>`;
+  const order = ["B1","B2","B3","B4"];
+  const rows = [...S.e1].sort((a, b) => (a.bid ? order.indexOf(a.bid) : 9) - (b.bid ? order.indexOf(b.bid) : 9));
+  rows.forEach(m => {
+    const ev = ids.filter(id => m.rules[id] && m.rules[id].passed != null), ok = ev.filter(id => m.rules[id].passed).length;
+    h += `<tr class="${m.bid ? "pick" : ""}" data-bid="${m.bid || ""}"><td class="left">${m.bid ? `<span class="bid">${m.bid}</span>` : `<span class="bid" style="visibility:hidden">B0</span>`}${esc(m.file.replace(".ifc", ""))}</td>` +
+      `<td class="mono">${m.schema}</td><td class="num">${m.nphys}</td>` +
+      ids.map(id => { const s = st(m.rules[id]); return `<td class="c ${["R09","R13"].includes(id) ? "sep-l" : ""}" data-r="${id}" title="${id} ${esc(RULES[id][0])}: ${stKo[s]} (${esc(fmtVal(id, m.rules[id]))})"><span class="dot ${s}">${s === "P" ? "✓" : s === "F" ? "✕" : "–"}</span></td>`; }).join("") +
+      `<td class="num">${ok}/${ev.length}</td></tr>`;
+  });
+  $("#e1matrix").innerHTML = h + "</tbody>";
+  $("#e1matrix").addEventListener("click", e => {
+    const tr = e.target.closest("tr[data-bid]"); if (!tr || !tr.dataset.bid) return;
+    const td = e.target.closest("td[data-r]");
+    selectModel(tr.dataset.bid, td ? td.dataset.r : state.rule);
+    $("#viewer").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+}
+function markMatrix() {
+  document.querySelectorAll("#e1matrix tr[data-bid]").forEach(tr => {
+    tr.classList.toggle("sel", tr.dataset.bid === state.bid);
+    tr.querySelectorAll("td.c").forEach(td => td.classList.toggle("cur", tr.dataset.bid === state.bid && td.dataset.r === state.rule));
+  });
+}
+function renderChips() {
+  $("#modelChips").innerHTML = Object.entries(MODELS).map(([b, m]) => `<button type="button" class="chip" data-b="${b}" aria-pressed="${b === state.bid}">${b} ${m[1]}</button>`).join("");
+  $("#modelChips").onclick = e => { const b = e.target.closest("[data-b]"); if (b) selectModel(b.dataset.b, state.rule); };
+  $("#layerSeg").onclick = e => { const b = e.target.closest("[data-l]"); if (!b) return; state.layer = b.dataset.l; syncLayer(); };
+}
+function selectModel(bid, rule) {
+  state.bid = bid; state.rule = rule || null; state.el = null;
+  document.querySelectorAll("#modelChips .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.b === bid));
+  markMatrix();
+  loadModel(bid);
+}
+
+// ---------------------------------------------------------------- 규칙 패널
+function model() { return cache[state.bid]; }
+function ruleState(id, e) {
+  switch (id) {
+    case "R02": return e.unc ? "bad" : "good";
+    case "R05": return e.proxy ? "bad" : "good";
+    case "R06": return !e.env ? "na" : e.isext ? "good" : "bad";
+    case "R07": return e.tri ? "good" : "bad";
+    case "R08": case "R12": return e.dup ? "bad" : "good";
+    case "R09": return e.cls === "GenericCityObject" ? "bad" : "good";
+    case "R10": return !e.solid ? "na" : e.solid === "ok" ? "good" : "bad";
+  }
+  return null;
+}
+const STATE_KO = {
+  R02: ["공간구조에 속하지 않음", "공간구조에 속함", ""], R05: ["Proxy(분류 없음)", "분류 있음", ""],
+  R06: ["IsExternal 없음", "IsExternal 있음", "외피 부재 아님(검사 제외)"], R07: ["해석 실패", "해석 성공", ""],
+  R08: ["중복 GlobalId", "고유 GlobalId", ""], R12: ["식별자 중복", "식별자 고유", ""],
+  R09: ["GenericCityObject(매핑 실패)", "CityGML 클래스로 매핑", ""], R10: ["무효 솔리드", "유효 솔리드", "솔리드 형상 아님(검사 제외)"],
+};
+
+function renderRules() {
+  const M = model(); if (!M) return;
+  $("#rules").innerHTML = STAGES.map(([n, ids]) => `<div class="stage-h">${n}</div>` + ids.map(id => {
+    const r = M.rules[id], s = st(r);
+    return `<button type="button" class="rule" data-r="${id}" aria-pressed="${state.rule === id}"><span class="id">${id}</span><span class="nm">${RULES[id][0]}</span><span class="val">${esc(fmtVal(id, r))}</span><span class="pill ${s}">${stKo[s]}</span></button>`;
+  }).join("")).join("");
+  $("#rules").onclick = e => { const b = e.target.closest("[data-r]"); if (!b) return; state.rule = state.rule === b.dataset.r ? null : b.dataset.r; state.el = null; onRuleChange(); };
+}
+function onRuleChange() {
+  document.querySelectorAll("#rules .rule").forEach(b => b.setAttribute("aria-pressed", b.dataset.r === state.rule));
+  if (state.rule && ["R11","R13","R14","R15"].includes(state.rule) && state.layer === "bim") state.layer = "both";
+  syncLayer(); markMatrix(); renderDetail(); paint();
+}
+function modelLevelText(id, M) {
+  const r = M.rules[id], d = r.detail;
+  switch (id) {
+    case "R01": return r.value ? `검증기가 스키마 오류 ${r.value}건을 찾았습니다. 원본 파일의 속성값 형식이 IFC4 규정과 맞지 않는 경우들입니다.` : "스키마 오류가 없습니다.";
+    case "R03": {
+      const lv = { 10: "주소", 20: "위경도", 30: "현장 원점", 40: "진북", 50: "지도변환+좌표계" };
+      return `이 모델이 가진 정보: ${(d || []).map(x => `${x} ${lv[x]}`).join(" · ") || "없음"}. ` + (r.passed ? "IfcMapConversion으로 지도좌표를 바로 계산합니다." : "지도변환 정보가 없어 위경도와 진북으로 UTM 좌표를 근사 계산했습니다(LoGeoRef 20 근사).");
+    }
+    case "R04": return r.passed == null ? "IfcMapConversion이 없어 검사 대상이 아닙니다." : `축척/단위 = ${r.value}로 기준 안입니다.`;
+    case "R11": return r.value ? `기준을 벗어난 건물: ${esc(JSON.stringify(d))}` : `변환된 LoD1 건물의 높이 ${M.lod1.map(l => (l.z[1] - l.z[0]).toFixed(2) + " m").join(", ")}, 면적과 변환 전후 면적비가 모두 기준 안입니다.`;
+    case "R13": return `좌표계 ${M.crs}. 적용 범위 판정: ${esc(d)}`;
+    case "R14": return r.passed == null ? "이 모델에는 비교할 기준자료가 없어 원본 상태에서는 판정하지 않습니다. 결함 주입 실험(E2)에서는 원본 변환 결과를 기준으로 삼아 판정했습니다." : `연합 모델이 공유하는 기준객체(geo-reference)의 위치를 다른 모델들의 중앙값과 비교: 편차 ${r.value} m. ${esc(d)}`;
+    case "R15": return r.passed == null ? "함께 통합할 도로·철도 레이어가 없어 검사 대상이 아닙니다." : `같은 현장의 도로·철도 레이어(Infra-Road, Infra-Rail)와 겹치는 면적 ${r.value} m².`;
+    case "R16": {
+      const names = ["작성 시각", "작성 소프트웨어", "작성자/기관", "좌표계", "길이 단위"];
+      return names.map((n, i) => `${d[i] ? "✓" : "✕"} ${n}`).join(" · ");
+    }
+  }
+  return "";
+}
+function renderDetail() {
+  const M = model(); if (!M) return;
+  const id = state.rule, box = $("#detail");
+  if (!id) {
+    const c = {}; M.elements.forEach(e => c[e.cls] = (c[e.cls] || 0) + 1);
+    const fails = Object.keys(RULES).filter(k => st(M.rules[k]) === "F");
+    box.className = "detail";
+    box.innerHTML = `<h3>${M.id} ${MODELS[M.id][1]}</h3>
+      <dl class="kv"><dt>파일</dt><dd class="mono">${esc(M.file)}</dd><dt>스키마</dt><dd>${M.schema}</dd>
+      <dt>공간참조</dt><dd>${esc(M.mode)} · ${esc(M.crs)}</dd><dt>부재</dt><dd>${M.elements.length}개 → ${Object.entries(c).map(([k, v]) => `${CLASS_KO[k] || k} ${v}`).join(", ")}</dd>
+      <dt>불합격</dt><dd>${fails.length ? fails.map(k => `${k} ${RULES[k][0]}`).join(", ") : "없음"}</dd></dl>
+      <p class="hint">아래 규칙을 누르면 무엇을 검사했는지, 어느 부재가 걸렸는지 3D에 표시합니다. 지금 색은 부재가 CityGML의 어떤 클래스로 옮겨졌는지입니다.</p>`;
+    return;
+  }
+  const r = M.rules[id], s = st(r);
+  box.className = "detail " + s;
+  let h = `<div class="card-head"><h3>${id} ${RULES[id][0]}</h3><span class="pill ${s}">${stKo[s]}</span></div>
+    <dl class="kv"><dt>검사 내용</dt><dd>${RULES[id][1]}</dd><dt>기준</dt><dd>${RULES[id][2]}</dd><dt>이 모델</dt><dd class="mono">${esc(fmtVal(id, r))}</dd></dl>`;
+  if (ELEMENT_RULES.has(id)) {
+    const k = { bad: 0, good: 0, na: 0 }; M.elements.forEach(e => k[ruleState(id, e)]++);
+    const lab = STATE_KO[id];
+    h += `<div class="legend"><span><i style="background:${ST_COL.bad}"></i>${lab[0]} ${k.bad}</span><span><i style="background:${ST_COL.good}"></i>${lab[1]} ${k.good}</span>${k.na ? `<span><i style="background:${ST_COL.na}"></i>${lab[2]} ${k.na}</span>` : ""}</div>`;
+    const list = M.elements.map((e, i) => [e, i]).filter(([e]) => ruleState(id, e) === "bad");
+    if (list.length) {
+      h += `<div class="ellist" id="ellist">` + list.slice(0, 300).map(([e, i]) => `<button type="button" data-i="${i}" class="${state.el === i ? "on" : ""}"><i style="background:${ST_COL.bad}"></i><span>${esc(e.name || "(이름 없음)")} <small>${esc(e.ifc)} → ${esc(e.cls)} · ${esc(e.g)}</small></span></button>`).join("") +
+        (list.length > 300 ? `<p class="hint">외 ${list.length - 300}개</p>` : "") + `</div>`;
+    } else h += `<p class="hint">걸린 부재가 없습니다.</p>`;
+  } else {
+    h += `<p>${modelLevelText(id, M)}</p>`;
+    if (["R11","R13","R14","R15"].includes(id)) h += `<p class="hint">모델 전체에 대한 규칙입니다. 3D에는 GIS로 변환된 LoD1 건물(파란 반투명 덩어리)을 함께 표시합니다.</p>`;
+    else h += `<p class="hint">모델 전체(파일 헤더·좌표 정보)에 대한 규칙이라 부재별 표시는 없습니다.</p>`;
+  }
+  box.innerHTML = h;
+  const L = $("#ellist");
+  if (L) L.onclick = e => { const b = e.target.closest("[data-i]"); if (!b) return; state.el = +b.dataset.i; L.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); paint();
+    const bx = three && elBox(M, M.elements[state.el]);
+    if (bx) { const c = bx.getCenter(new THREE.Vector3()), off = three.camera.position.clone().sub(three.controls.target); three.controls.target.copy(c); three.camera.position.copy(c.clone().add(off)); } };
+}
+
+// ---------------------------------------------------------------- 3D
+let three = null;
+function initThree() {
+  if (three) return three;
+  if (!window.THREE || !THREE.OrbitControls) { $("#vmsg").textContent = "3D 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요."; return null; }
+  const host = $("#viewer");
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  host.prepend(renderer.domElement);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 5000);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.12;
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 0.85));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.55); sun.position.set(0.6, 1, 0.35); scene.add(sun);
+  const ray = new THREE.Raycaster();
+  three = { renderer, scene, camera, controls, ray, group: null, mesh: null, lod1: null, ground: null };
+  const resize = () => { const w = host.clientWidth, hh = host.clientHeight; renderer.setSize(w, hh, false); camera.aspect = w / hh; camera.updateProjectionMatrix(); };
+  new ResizeObserver(resize).observe(host); resize();
+  const bg = () => renderer.setClearColor(getComputedStyle(document.documentElement).getPropertyValue("--canvas").trim() || "#eef2f4");
+  bg(); matchMedia("(prefers-color-scheme: dark)").addEventListener("change", bg);
+  new MutationObserver(bg).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  (function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
+  const tip = $("#tip");
+  renderer.domElement.addEventListener("pointermove", ev => {
+    const M = model(); if (!M || !three.mesh || !three.mesh.visible) { tip.style.display = "none"; return; }
+    const rc = renderer.domElement.getBoundingClientRect();
+    const p = new THREE.Vector2(((ev.clientX - rc.left) / rc.width) * 2 - 1, -((ev.clientY - rc.top) / rc.height) * 2 + 1);
+    ray.setFromCamera(p, camera);
+    const hit = ray.intersectObject(three.mesh)[0];
+    if (!hit) { tip.style.display = "none"; return; }
+    const e = M.elements[elementOfTri(M, hit.faceIndex)];
+    let line = `${esc(CLASS_KO[e.cls] || e.cls)}`;
+    if (state.rule && ELEMENT_RULES.has(state.rule)) { const k = ruleState(state.rule, e); line = `${state.rule}: ${esc(STATE_KO[state.rule][{ bad: 0, good: 1, na: 2 }[k]])}`; }
+    tip.innerHTML = `<b>${esc(e.name || "(이름 없음)")}</b><br>${esc(e.ifc)} → ${esc(e.cls)}<br>${line}<br><span class="mono">${esc(e.g)}</span>`;
+    tip.style.display = "block";
+    tip.style.left = Math.min(ev.clientX - rc.left + 14, rc.width - 240) + "px";
+    tip.style.top = Math.min(ev.clientY - rc.top + 14, rc.height - 90) + "px";
+  });
+  renderer.domElement.addEventListener("pointerleave", () => tip.style.display = "none");
+  return three;
+}
+function decode(b64, Type) { const bin = atob(b64), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); return new Type(u8.buffer); }
+function elBox(M, e) {
+  if (!e.v) return null;
+  const b = new THREE.Box3(), p = new THREE.Vector3();
+  for (let j = e.v[0]; j < e.v[0] + e.v[1]; j++) b.expandByPoint(p.set(M._pos[j * 3], M._pos[j * 3 + 1], M._pos[j * 3 + 2]));
+  return b;
+}
+function elementOfTri(M, t) { let lo = 0, hi = M._tri.length - 1; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (M._tri[mid][0] <= t) lo = mid; else hi = mid - 1; } return M._tri[lo][1]; }
+
+async function loadModel(bid) {
+  $("#vmsg").style.display = "grid"; $("#vmsg").textContent = `${bid} 모델을 불러오는 중…`;
+  if (!cache[bid]) {
+    try { cache[bid] = await (await fetch(`data/${bid}.json`)).json(); }
+    catch (err) { $("#vmsg").textContent = `모델 데이터를 불러오지 못했습니다: ${err}`; return; }
+    const M = cache[bid];
+    const q = decode(M.verts, Int16Array), li = decode(M.idx, Uint16Array);
+    const pos = new Float32Array(q.length);
+    for (let i = 0; i < q.length; i += 3) { pos[i] = q[i] / 100; pos[i + 1] = q[i + 2] / 100; pos[i + 2] = -q[i + 1] / 100; } // 지도 E,N,H → three x,y,z
+    const idx = new Uint32Array(li.length); M._tri = [];
+    M.elements.forEach((e, k) => { if (!e.v) return; M._tri.push([e.t[0], k]); for (let j = e.t[0] * 3; j < (e.t[0] + e.t[1]) * 3; j++) idx[j] = li[j] + e.v[0]; });
+    M._pos = pos; M._idx = idx;
+  }
+  if (bid !== state.bid) return;
+  const T = initThree(); renderRules(); renderDetail(); markMatrix();
+  const M = cache[bid];
+  $("#modelNote").textContent = `${M.file} · 좌표: ${M.crs} (${M.mode}) · 지도좌표 원점 E ${M.origin[0].toFixed(1)}, N ${M.origin[1].toFixed(1)}`;
+  if (!T) return;
+  if (T.group) { T.scene.remove(T.group); T.group.traverse(o => { if (o.geometry) o.geometry.dispose(); }); }
+  const g = new THREE.Group(); T.group = g;
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(M._pos, 3));
+  geo.setAttribute("color", new THREE.BufferAttribute(new Float32Array(M._pos.length), 3));
+  geo.setIndex(new THREE.BufferAttribute(M._idx, 1));
+  T.mesh = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({ vertexColors: true, flatShading: true, side: THREE.DoubleSide, shininess: 8 }));
+  g.add(T.mesh);
+  // LoD1 (GIS 변환 결과)
+  const lg = new THREE.Group();
+  M.lod1.forEach(l => l.rings.forEach(ring => {
+    const shape = new THREE.Shape(ring.map(([x, y]) => new THREE.Vector2(x, y)));
+    const ex = new THREE.ExtrudeGeometry(shape, { depth: l.z[1] - l.z[0], bevelEnabled: false });
+    ex.rotateX(-Math.PI / 2); ex.translate(0, l.z[0], 0);
+    lg.add(new THREE.Mesh(ex, new THREE.MeshLambertMaterial({ color: 0x2f7fc1, transparent: true, opacity: 0.32, depthWrite: false, side: THREE.DoubleSide })));
+    lg.add(new THREE.LineSegments(new THREE.EdgesGeometry(ex, 20), new THREE.LineBasicMaterial({ color: 0x1d5c88 })));
+  }));
+  T.lod1 = lg; g.add(lg);
+  T.scene.add(g);
+  geo.computeBoundingBox();
+  // 건물(LoD1) 주변 부재만으로 화면을 맞춤: 멀리 떨어진 측량 표식 등은 제외
+  const bb = new THREE.Box3().setFromObject(lg.children.length ? lg : g);
+  const c0 = bb.getCenter(new THREE.Vector3()), r0 = bb.getSize(new THREE.Vector3()).length();
+  M.elements.forEach(e => { const b = elBox(M, e); if (b && b.getCenter(new THREE.Vector3()).distanceTo(c0) < r0) bb.union(b); });
+  const c = bb.getCenter(new THREE.Vector3()), sz = bb.getSize(new THREE.Vector3());
+  const r = Math.max(sz.x, sz.y, sz.z);
+  T.controls.target.copy(c);
+  T.camera.position.set(c.x + r * 0.85, c.y + r * 0.65, c.z + r * 1.05);
+  T.camera.near = r / 200; T.camera.far = r * 30; T.camera.updateProjectionMatrix();
+  $("#vmsg").style.display = "none";
+  syncLayer(); paint();
+}
+function syncLayer() {
+  document.querySelectorAll("#layerSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.l === state.layer));
+  if (!three || !three.mesh) return;
+  three.mesh.visible = state.layer !== "gis";
+  three.lod1.visible = state.layer !== "bim";
+  renderLegend();
+}
+function paint() {
+  const M = model(); if (!M || !three || !three.mesh) return;
+  const col = three.mesh.geometry.getAttribute("color"), a = col.array, c = new THREE.Color();
+  const er = state.rule && ELEMENT_RULES.has(state.rule);
+  M.elements.forEach((e, i) => {
+    if (!e.v) return;
+    let hex = er ? ST_COL[ruleState(state.rule, e)] : (CLASS_COL[e.cls] || "#999");
+    if (state.el === i) hex = ST_COL.sel;
+    c.set(hex);
+    for (let j = e.v[0]; j < e.v[0] + e.v[1]; j++) { a[j * 3] = c.r; a[j * 3 + 1] = c.g; a[j * 3 + 2] = c.b; }
+  });
+  col.needsUpdate = true;
+  renderLegend();
+}
+function renderLegend() {
+  const M = model(); if (!M) return;
+  let h = "";
+  if (state.layer !== "gis") {
+    if (state.rule && ELEMENT_RULES.has(state.rule)) {
+      const lab = STATE_KO[state.rule];
+      h += `<span><i style="background:${ST_COL.bad}"></i>${lab[0]}</span><span><i style="background:${ST_COL.good}"></i>${lab[1]}</span>` + (lab[2] ? `<span><i style="background:${ST_COL.na}"></i>${lab[2]}</span>` : "");
+    } else {
+      const used = new Set(M.elements.map(e => e.cls));
+      h += Object.keys(CLASS_COL).filter(k => used.has(k)).map(k => `<span><i style="background:${CLASS_COL[k]}"></i>${CLASS_KO[k]}</span>`).join("");
+    }
+    if (state.el != null) h += `<span><i style="background:${ST_COL.sel}"></i>선택한 부재</span>`;
+  }
+  if (state.layer !== "bim") h += `<span><i style="background:rgba(47,127,193,.45);box-shadow:inset 0 0 0 1px #1d5c88"></i>GIS 변환 결과(LoD1 건물)</span>`;
+  $("#legend").innerHTML = h;
+}
+
+// ---------------------------------------------------------------- E2
+function renderE2() {
+  const conf = S.e2.by_conf, keys = Object.keys(conf);
+  const lab = { "B0 스키마 검증(R01)": "스키마 검증만(R01)", "P1 단독": "P1 원천 BIM", "P1+P2": "P1 + P2 변환", "P1+P2+P3(제안)": "P1 + P2 + P3 (제안)" };
+  $("#bars").innerHTML = keys.map((k, i) => { const [d, n] = conf[k]; return `<div class="barrow ${i === keys.length - 1 ? "best" : ""}"><span>${lab[k] || k}</span><div class="track"><div class="fill" style="width:${(d / n * 100).toFixed(1)}%"></div></div><span class="num">${d}/${n} · ${pct(d / n)}</span></div>`; }).join("") +
+    `<p class="hint">P3 통합 검증을 더하면 탐지율이 ${pct((conf[keys[3]][0] - conf[keys[2]][0]) / conf[keys[3]][1])}p 오릅니다. 원점 이동·회전처럼 원본 파일 안에서는 정상으로 보이는 좌표 결함은 지도 위에서 기준자료와 비교해야만 드러납니다.</p>`;
+  const ids = STAGES.flatMap(s => s[1]);
+  let h = `<thead><tr class="stage"><th class="left" rowspan="2">결함</th><th rowspan="2">탐지</th>` + STAGES.map(([n, r], i) => `<th colspan="${r.length}" class="${i ? "sep-l" : ""}">${n.split(" ")[0]}</th>`).join("") + `</tr><tr>` +
+    ids.map(id => `<th class="${["R09","R13"].includes(id) ? "sep-l" : ""}" title="${esc(RULES[id][0])}">${id.slice(1)}</th>`).join("") + `</tr></thead><tbody>`;
+  Object.entries(FAULTS).forEach(([k, f]) => {
+    const t = S.e2.by_type[k]; if (!t) return;
+    const mx = S.e2.matrix[k] || {}, ex = new Set(S.e2.expected[k]);
+    h += `<tr class="pick" data-m="${k}"><td class="left"><span class="bid">${f[0]}</span>${f[1]}</td><td class="rate">${t.det}/${t.n}</td>` +
+      ids.map(id => { const v = mx[id] || 0, e = ex.has(id); const cls = e ? (v ? "exp hit" : "exp") : (v ? "casc" : ""); return `<td class="c ${cls} ${["R09","R13"].includes(id) ? "sep-l" : ""}" title="${id} ${esc(RULES[id][0])}${e ? " (주 규칙)" : ""}: ${v}개"><span>${v || (e ? "0" : "")}</span></td>`; }).join("") + `</tr>`;
+  });
+  $("#fmatrix").innerHTML = h + "</tbody>";
+  $("#fmatrix").onclick = e => { const tr = e.target.closest("tr[data-m]"); if (tr) { state.mut = tr.dataset.m; renderMutants(); $("#mutCard").scrollIntoView({ behavior: "smooth", block: "nearest" }); } };
+  renderMutants();
+}
+function logText(m) {
+  const l = m.log || {};
+  if (l.removed) return `삭제: ${l.removed}`;
+  if (l.d != null) return `${l.d} m 이동, 방향 ${l.phi}°`;
+  if (l.theta_deg != null) return `${l.theta_deg > 0 ? "+" : ""}${l.theta_deg}° 회전`;
+  if (l.scale != null) return `축척 → ${l.scale}`;
+  if ("prefix" in l) return `길이 단위 접두어 → ${l.prefix ?? "없음(m)"}`;
+  if (l.kind) return `${l.kind === "brep_face_removed" ? "B-rep 면 1개 삭제" : "삼각형 1개 삭제"} (${l.elem})`;
+  if (l.guid) return `GlobalId ${l.guid} 복제`;
+  if (l.from) return `좌표계 ${l.from} → ${l.to}`;
+  if (l.n != null) return `부재 ${l.n}개 변경`;
+  return "";
+}
+function renderMutants() {
+  const k = state.mut, f = FAULTS[k], t = S.e2.by_type[k], ex = new Set(S.e2.expected[k]);
+  document.querySelectorAll("#fmatrix tr[data-m]").forEach(tr => tr.classList.toggle("sel", tr.dataset.m === k));
+  const list = S.e2.mutants.filter(m => m.m === k).sort((a, b) => a.bid.localeCompare(b.bid) || (a.rep ?? 0) - (b.rep ?? 0));
+  $("#mutTitle").innerHTML = `${f[0]} ${f[1]} · 변이 모델 ${list.length}개 중 ${t.det}개 탐지 <span class="hint">— ${f[2]}. 주 규칙: ${[...ex].join(", ")}</span>`;
+  $("#mutTable").innerHTML = `<thead><tr><th>기준 모델</th><th>회차</th><th>넣은 결함</th><th>탐지한 규칙</th><th>결과</th></tr></thead><tbody>` +
+    list.map(m => `<tr><td><span class="bid">${m.bid}</span>${MODELS[m.bid][1]}</td><td class="num">${m.rep ?? ""}</td><td>${esc(logText(m))}</td>` +
+      `<td>${m.det.length ? m.det.map(r => `<span class="tag ${ex.has(r) ? "main" : ""}" title="${esc(RULES[r][0])}">${r}</span>`).join("") : "–"}</td>` +
+      `<td><span class="pill ${m.det.length ? "P" : "F"}">${m.det.length ? "탐지" : "놓침"}</span></td></tr>`).join("") + `</tbody>` +
+    (k === "M3_GEO_ROT" ? `<caption class="hint" style="caption-side:bottom;text-align:left;padding-top:8px">B2는 1° 회전해도 평면 편차가 0.173 m로 τ(0.20 m)보다 작아 놓쳤습니다. 공간참조 민감도(E3) 화면에서 확인할 수 있습니다.</caption>` : "");
+}
+
+// ---------------------------------------------------------------- E3
+function renderE3Chips() {
+  $("#geoChips").innerHTML = Object.keys(MODELS).map(b => `<button type="button" class="chip" data-b="${b}" aria-pressed="${b === state.geo}">${b}</button>`).join("");
+  $("#geoChips").onclick = e => { const b = e.target.closest("[data-b]"); if (!b) return; state.geo = b.dataset.b; document.querySelectorAll("#geoChips .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.b === state.geo)); renderE3(); };
+  $("#shift").oninput = renderE3; $("#rot").oninput = renderE3;
+}
+function segDist(p, a, b) {
+  const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy;
+  let t = L ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L : 0; t = Math.max(0, Math.min(1, t));
+  return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
+}
+function dirHaus(A, B) { // A의 꼭짓점에서 B 경계까지 거리의 최대값 (GEOS 이산 Hausdorff와 같은 방식)
+  let mx = 0;
+  A.forEach(ra => ra.forEach(p => { let mn = Infinity; B.forEach(rb => { for (let i = 0; i < rb.length - 1; i++) mn = Math.min(mn, segDist(p, rb[i], rb[i + 1])); }); mx = Math.max(mx, mn); }));
+  return mx;
+}
+function renderE3() {
+  if (!S) return;
+  const P = S.plans[state.geo], d = +$("#shift").value, th = +$("#rot").value * Math.PI / 180, tau = S.th.R14_tau;
+  $("#shiftV").textContent = d.toFixed(2) + " m"; $("#rotV").textContent = (+$("#rot").value).toFixed(2) + "°";
+  const [px, py] = P.pivot, c = Math.cos(th), s = Math.sin(th);
+  const A = P.lod1.flatMap(l => l.rings);
+  const B = A.map(r => r.map(([x, y]) => [px + c * (x - px) - s * (y - py) + d, py + s * (x - px) + c * (y - py)]));
+  const dev = Math.max(dirHaus(A, B), dirHaus(B, A)), ok = dev <= tau + 1e-9;
+  $("#readout").innerHTML = `<span>위치편차(Hausdorff)</span><span class="big">${dev.toFixed(3)} m</span><span class="pill ${ok ? "P" : "F"}">R14 ${ok ? "통과" : "불합격"}</span><span class="hint">τ = ${tau} m · ${MODELS[state.geo][1]} · ${P.crs}${!ok && d < tau && +$("#rot").value <= 2 ? " · 도면에서는 거의 겹쳐 보여도 허용 한계를 넘습니다" : ""}</span>`;
+  // 평면도
+  const pts = A.flat().concat(B.flat()).concat([[px, py]]);
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  let x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const pad = Math.max(x1 - x0, y1 - y0) * 0.08 + 0.5; x0 -= pad; x1 += pad; y0 -= pad; y1 += pad;
+  const W = 560, H = 380, k = Math.min(W / (x1 - x0), H / (y1 - y0)), ox = (W - k * (x1 - x0)) / 2, oy = (H - k * (y1 - y0)) / 2;
+  const X = x => ox + (x - x0) * k, Y = y => H - oy - (y - y0) * k;
+  const path = rs => rs.map(r => "M" + r.map(p => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join("L") + "Z").join("");
+  const nice = [0.5, 1, 2, 5, 10, 20, 50].find(v => v * k > 70) || 50;
+  $("#plan").innerHTML = `<path d="${path(A)}" fill="none" stroke="var(--ink)" stroke-width="1.6"/>
+    <path d="${path(B)}" fill="var(--fail)" fill-opacity=".16" stroke="var(--fail)" stroke-width="1.6"/>
+    <g stroke="var(--accent)" stroke-width="2"><line x1="${X(px) - 7}" y1="${Y(py)}" x2="${X(px) + 7}" y2="${Y(py)}"/><line x1="${X(px)}" y1="${Y(py) - 7}" x2="${X(px)}" y2="${Y(py) + 7}"/></g>
+    <g transform="translate(16,${H + 22})"><line x1="0" y1="0" x2="${nice * k}" y2="0" stroke="var(--ink)" stroke-width="2"/><line x1="0" y1="-4" x2="0" y2="4" stroke="var(--ink)"/><line x1="${nice * k}" y1="-4" x2="${nice * k}" y2="4" stroke="var(--ink)"/><text x="${nice * k + 8}" y="4" class="lbl">${nice} m</text></g>
+    <text x="${W - 4}" y="${H + 26}" text-anchor="end" class="lbl">↑ 북(N) · 평면 좌표는 ${P.crs} 기준 상대값</text>`;
+  $("#plan").setAttribute("viewBox", `0 0 ${W} ${H + 36}`);
+  renderSens(th * 180 / Math.PI);
+}
+function renderSens(cur) {
+  const rows = S.e3.filter(r => r.kind === "rot" && r.sign === 1), tau = S.th.R14_tau;
+  const W = 560, H = 340, L = 56, R = 70, T = 14, B = 40;
+  const lx = v => L + (Math.log10(v) - Math.log10(0.005)) / (Math.log10(2) - Math.log10(0.005)) * (W - L - R);
+  const ly = v => T + (1 - (Math.log10(v) - (-3)) / (Math.log10(3) - (-3))) * (H - T - B);
+  const cols = { B1: "#1d5c88", B2: "#6b9ac4", B3: "#2e8a57", B4: "#c06a1c" };
+  let g = "";
+  [0.001, 0.01, 0.1, 1].forEach(v => g += `<line class="ax" x1="${L}" x2="${W - R}" y1="${ly(v)}" y2="${ly(v)}"/><text class="lbl" x="${L - 6}" y="${ly(v) + 4}" text-anchor="end">${v} m</text>`);
+  [0.005, 0.01, 0.1, 1, 2].forEach(v => g += `<line class="ax" y1="${T}" y2="${H - B}" x1="${lx(v)}" x2="${lx(v)}"/><text class="lbl" y="${H - B + 16}" x="${lx(v)}" text-anchor="middle">${v}°</text>`);
+  g += `<text class="lbl" x="${(L + W - R) / 2}" y="${H - 6}" text-anchor="middle">진북 회전각 (로그 눈금)</text>`;
+  g += `<line x1="${L}" x2="${W - R}" y1="${ly(tau)}" y2="${ly(tau)}" stroke="var(--fail)" stroke-dasharray="5 4" stroke-width="1.4"/><text x="${L + 4}" y="${ly(tau) - 6}" class="lbl" style="fill:var(--fail)">τ = ${tau} m (R14 허용 한계)</text>`;
+  const crit = {}, labs = [];
+  Object.keys(cols).forEach(b => {
+    const rs = rows.filter(r => r.bid === b).sort((a, c) => a.v - c.v);
+    const sel = b === state.geo;
+    g += `<polyline fill="none" stroke="${cols[b]}" stroke-width="${sel ? 3 : 1.6}" stroke-opacity="${sel ? 1 : .55}" points="${rs.map(r => `${lx(r.v).toFixed(1)},${ly(Math.max(r.dev, 1e-3)).toFixed(1)}`).join(" ")}"/>`;
+    const last = rs[rs.length - 1];
+    labs.push({ y: ly(last.dev) + 4, t: `<tspan style="fill:${cols[b]};font-weight:${sel ? 700 : 500}">${b} ${last.dev.toFixed(2)} m</tspan>`, x: lx(last.v) + 6 });
+    crit[b] = tau / (last.dev / last.v);   // 편차는 회전각에 비례
+    if (sel && cur > 0) { const dv = last.dev / last.v * cur; if (cur >= 0.005) g += `<circle cx="${lx(Math.min(cur, 2))}" cy="${ly(Math.max(dv, 1e-3))}" r="5.5" fill="${cols[b]}" stroke="var(--surface)" stroke-width="2"/>`; }
+  });
+  labs.sort((a, b) => a.y - b.y).forEach((l, i, a) => { if (i && l.y - a[i - 1].y < 14) l.y = a[i - 1].y + 14; g += `<text x="${l.x}" y="${l.y}" style="font-size:12px">${l.t}</text>`; });
+  $("#sens").innerHTML = g;
+  $("#sensNote").innerHTML = `실험(E3)에서 측정한 회전각별 위치편차입니다. 편차는 회전 중심에서 건물 끝까지의 거리에 비례해, τ를 넘는 임계 회전각은 ` +
+    Object.entries(crit).map(([b, v]) => `${b} ${v.toFixed(2)}°`).join(" · ") + `입니다. 큰 점은 왼쪽에서 고른 모델과 회전각입니다. 원점 이동은 이동량이 그대로 편차가 됩니다.`;
+}
+
+// ---------------------------------------------------------------- 화면 전환
+function route() {
+  const v = (location.hash || "#models").slice(1);
+  const ok = ["models", "faults", "georef"].includes(v) ? v : "models";
+  document.querySelectorAll("main section").forEach(s => s.classList.toggle("on", s.id === "v-" + ok));
+  document.querySelectorAll("nav.tabs a").forEach(a => { if (a.dataset.v === ok) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+}
+window.addEventListener("hashchange", route);
+</script>
+</body>
+</html>
