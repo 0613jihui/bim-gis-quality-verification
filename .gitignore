@@ -1,6 +1,6 @@
 # 원본 IFC는 download_data.py로 받는다
-bs43/
-osb/
+bs43
+osb
 # 재생성 가능한 중간 파일
 out/e1_reference.pkl
 __pycache__/
