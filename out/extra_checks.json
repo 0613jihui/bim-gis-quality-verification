@@ -1,0 +1,213 @@
+{
+ "env": {
+  "python": "3.13.18",
+  "ifcopenshell": "0.9.0.post1",
+  "shapely": "2.2.0",
+  "trimesh": "5.2.2",
+  "pyproj": "3.8.0",
+  "proj": "9.8.1"
+ },
+ "mapconversion": {
+  "bs43/Building-Architecture.ifc": {
+   "E": 729013.35,
+   "N": 9063992.68,
+   "rot_deg": 60.0,
+   "Scale": 0.001,
+   "crs": "EPSG:32760"
+  },
+  "bs43/Building-Structural.ifc": {
+   "E": 729013.35,
+   "N": 9063992.68,
+   "rot_deg": 60.0,
+   "Scale": 0.001,
+   "crs": "EPSG:32760"
+  }
+ },
+ "fzk_ref_latlon": {
+  "RefLatitude": [
+   52,
+   31,
+   0
+  ],
+  "RefLongitude": [
+   13,
+   24,
+   0
+  ]
+ },
+ "generic_breakdown": {
+  "bs43/Building-Structural.ifc": {
+   "IfcBeam | 귀속시설=IfcSite(시설 없음) | PredefinedType=None": 6,
+   "IfcBuildingElementProxy | 귀속시설=IfcSite(시설 없음) | PredefinedType=None": 2,
+   "IfcDiscreteAccessory | 귀속시설=IfcSite(시설 없음) | PredefinedType=None": 2
+  },
+  "bs43/Building-Architecture.ifc": {
+   "IfcBuildingElementProxy | 귀속시설=IfcSite(시설 없음) | PredefinedType=None": 2,
+   "IfcEarthworksFill | 귀속시설=IfcSite(시설 없음) | PredefinedType=SUBGRADE": 1,
+   "IfcSlab | 귀속시설=IfcSite(시설 없음) | PredefinedType=None": 2
+  },
+  "bs43/Building-Hvac.ifc": {
+   "IfcBuildingElementProxy | 귀속시설=IfcSite(시설 없음) | PredefinedType=None": 2
+  },
+  "bs43/Building-Landscaping.ifc": {
+   "IfcBuildingElementProxy | 귀속시설=IfcSite(시설 없음) | PredefinedType=None": 2,
+   "IfcGeographicElement | 귀속시설=IfcSite(시설 없음) | PredefinedType=None": 4
+  }
+ },
+ "smiley_schema_errors": {
+  "Attribute not optional :: IfcRelSpaceBoundary.RelatedBuildingElement": 95
+ },
+ "r10_merged_mesh": {
+  "osb/AC11-FZK-Haus-IFC.ifc": {
+   "valid": 74,
+   "checked": 90,
+   "rate": 0.8222
+  },
+  "osb/AC11-Institute-Var-2-IFC.ifc": {
+   "valid": 412,
+   "checked": 699,
+   "rate": 0.5894
+  },
+  "osb/AC-20-Smiley-West-10-Bldg_fix.ifc": {
+   "valid": 540,
+   "checked": 831,
+   "rate": 0.6498
+  }
+ },
+ "m9_r10_values": [
+  [
+   "B3",
+   "brep_face_removed",
+   0.5444
+  ],
+  [
+   "B3",
+   "brep_face_removed",
+   0.9778
+  ],
+  [
+   "B3",
+   "brep_face_removed",
+   0.9889
+  ],
+  [
+   "B3",
+   "brep_face_removed",
+   0.9889
+  ],
+  [
+   "B3",
+   "brep_face_removed",
+   0.9889
+  ],
+  [
+   "B4",
+   "brep_face_removed",
+   0.9928
+  ],
+  [
+   "B4",
+   "brep_face_removed",
+   0.9639
+  ],
+  [
+   "B4",
+   "brep_face_removed",
+   0.9639
+  ],
+  [
+   "B1",
+   "tess_triangle_removed",
+   null
+  ],
+  [
+   "B1",
+   "tess_triangle_removed",
+   null
+  ],
+  [
+   "B1",
+   "tess_triangle_removed",
+   null
+  ],
+  [
+   "B1",
+   "tess_triangle_removed",
+   null
+  ],
+  [
+   "B1",
+   "tess_triangle_removed",
+   null
+  ],
+  [
+   "B2",
+   "tess_triangle_removed",
+   null
+  ],
+  [
+   "B2",
+   "tess_triangle_removed",
+   null
+  ],
+  [
+   "B2",
+   "tess_triangle_removed",
+   null
+  ],
+  [
+   "B2",
+   "tess_triangle_removed",
+   null
+  ],
+  [
+   "B2",
+   "tess_triangle_removed",
+   null
+  ]
+ ],
+ "detect_with_r10_zero_tolerance": "116/131 = 88.5%",
+ "m3_r14_by_base": {
+  "B1": [
+   0.215
+  ],
+  "B2": [
+   0.173
+  ],
+  "B3": [
+   0.218
+  ],
+  "B4": [
+   1.318
+  ]
+ },
+ "b3_worst_m9": {
+  "rate": 0.5444,
+  "invalid_of_90": 41
+ },
+ "tau_sensitivity": {
+  "M2_GEO_SHIFT": {
+   "0.05": "18/18",
+   "0.1": "18/18",
+   "0.2": "18/18",
+   "0.3": "18/18",
+   "0.5": "18/18",
+   "1.0": "0/18"
+  },
+  "M3_GEO_ROT": {
+   "0.05": "18/18",
+   "0.1": "18/18",
+   "0.2": "13/18",
+   "0.3": "3/18",
+   "0.5": "3/18",
+   "1.0": "3/18"
+  }
+ },
+ "critical_angle_deg_tau0.2": {
+  "B1": 0.93,
+  "B2": 1.16,
+  "B3": 0.92,
+  "B4": 0.15
+ },
+ "shift_max_abs_diff_m": 0.00020000000000003348
+}

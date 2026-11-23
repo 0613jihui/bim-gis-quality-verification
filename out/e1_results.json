@@ -1,0 +1,751 @@
+{
+ "bs43/Building-Architecture.ifc": {
+  "schema": "IFC4X3",
+  "nphys": 11,
+  "level": 50,
+  "mode": "LoGeoRef50",
+  "crs": "EPSG:32760",
+  "seconds": 0.5,
+  "facilities": [
+   [
+    "IfcBuilding",
+    "Single-family house",
+    3.63,
+    28.1
+   ]
+  ],
+  "classes": {
+   "GenericCityObject": 5,
+   "BuildingConstructiveElement": 5,
+   "BuildingFurniture": 1
+  },
+  "results": {
+   "R01": {
+    "value": 0,
+    "passed": true
+   },
+   "R02": {
+    "value": 0.0,
+    "passed": true,
+    "detail": 0
+   },
+   "R03": {
+    "value": 50,
+    "passed": true,
+    "detail": [
+     30,
+     50
+    ]
+   },
+   "R04": {
+    "value": 1.0,
+    "passed": true
+   },
+   "R05": {
+    "value": 0.1818,
+    "passed": false,
+    "detail": 2
+   },
+   "R06": {
+    "value": 0.1429,
+    "passed": false,
+    "detail": "1/7"
+   },
+   "R07": {
+    "value": 1.0,
+    "passed": true,
+    "detail": "11/11"
+   },
+   "R08": {
+    "value": 0,
+    "passed": true
+   },
+   "R09": {
+    "value": 0.5455,
+    "passed": false,
+    "detail": "6/11"
+   },
+   "R10": {
+    "value": null,
+    "passed": true,
+    "detail": "no solid elements"
+   },
+   "R11": {
+    "value": 0,
+    "passed": true,
+    "detail": []
+   },
+   "R12": {
+    "value": 0,
+    "passed": true
+   },
+   "R13": {
+    "value": true,
+    "passed": true,
+    "detail": "1.000 in [174,-80,180,0]"
+   },
+   "R14": {
+    "value": 0.0,
+    "passed": true,
+    "detail": "공통기준객체 편차(연합모델 중앙값 대비)"
+   },
+   "R15": {
+    "value": 0.0,
+    "passed": true
+   },
+   "R16": {
+    "value": 0.8,
+    "passed": false,
+    "detail": [
+     true,
+     true,
+     false,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "bs43/Building-Hvac.ifc": {
+  "schema": "IFC4X3",
+  "nphys": 5,
+  "level": 50,
+  "mode": "LoGeoRef50",
+  "crs": "EPSG:32760",
+  "seconds": 0.3,
+  "facilities": [
+   [
+    "IfcBuilding",
+    "Single-family house",
+    4.15,
+    0.5
+   ]
+  ],
+  "classes": {
+   "GenericCityObject": 2,
+   "BuildingInstallation": 3
+  },
+  "results": {
+   "R01": {
+    "value": 0,
+    "passed": true
+   },
+   "R02": {
+    "value": 0.0,
+    "passed": true,
+    "detail": 0
+   },
+   "R03": {
+    "value": 50,
+    "passed": true,
+    "detail": [
+     30,
+     50
+    ]
+   },
+   "R04": {
+    "value": 1.0,
+    "passed": true
+   },
+   "R05": {
+    "value": 0.4,
+    "passed": false,
+    "detail": 2
+   },
+   "R06": {
+    "value": null,
+    "passed": null,
+    "detail": "N/A (no envelope elements)"
+   },
+   "R07": {
+    "value": 1.0,
+    "passed": true,
+    "detail": "5/5"
+   },
+   "R08": {
+    "value": 0,
+    "passed": true
+   },
+   "R09": {
+    "value": 0.6,
+    "passed": false,
+    "detail": "3/5"
+   },
+   "R10": {
+    "value": null,
+    "passed": true,
+    "detail": "no solid elements"
+   },
+   "R11": {
+    "value": 1,
+    "passed": false,
+    "detail": [
+     [
+      "Single-family house",
+      4.15,
+      0.5,
+      1.0
+     ]
+    ]
+   },
+   "R12": {
+    "value": 0,
+    "passed": true
+   },
+   "R13": {
+    "value": true,
+    "passed": true,
+    "detail": "1.000 in [174,-80,180,0]"
+   },
+   "R14": {
+    "value": 0.0,
+    "passed": true,
+    "detail": "공통기준객체 편차(연합모델 중앙값 대비)"
+   },
+   "R15": {
+    "value": 0.0,
+    "passed": true
+   },
+   "R16": {
+    "value": 0.8,
+    "passed": false,
+    "detail": [
+     true,
+     true,
+     false,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "bs43/Building-Landscaping.ifc": {
+  "schema": "IFC4X3",
+  "nphys": 6,
+  "level": 50,
+  "mode": "LoGeoRef50",
+  "crs": "EPSG:32760",
+  "seconds": 1.2,
+  "facilities": [],
+  "classes": {
+   "GenericCityObject": 6
+  },
+  "results": {
+   "R01": {
+    "value": 0,
+    "passed": true
+   },
+   "R02": {
+    "value": 0.0,
+    "passed": true,
+    "detail": 0
+   },
+   "R03": {
+    "value": 50,
+    "passed": true,
+    "detail": [
+     30,
+     50
+    ]
+   },
+   "R04": {
+    "value": 1.0,
+    "passed": true
+   },
+   "R05": {
+    "value": 0.3333,
+    "passed": false,
+    "detail": 2
+   },
+   "R06": {
+    "value": null,
+    "passed": null,
+    "detail": "N/A (no envelope elements)"
+   },
+   "R07": {
+    "value": 1.0,
+    "passed": true,
+    "detail": "6/6"
+   },
+   "R08": {
+    "value": 0,
+    "passed": true
+   },
+   "R09": {
+    "value": 0.0,
+    "passed": false,
+    "detail": "0/6"
+   },
+   "R10": {
+    "value": null,
+    "passed": null,
+    "detail": "no solid elements"
+   },
+   "R11": {
+    "value": 0,
+    "passed": true,
+    "detail": []
+   },
+   "R12": {
+    "value": 0,
+    "passed": true
+   },
+   "R13": {
+    "value": true,
+    "passed": true,
+    "detail": "1.000 in [174,-80,180,0]"
+   },
+   "R14": {
+    "value": 0.0,
+    "passed": true,
+    "detail": "공통기준객체 편차(연합모델 중앙값 대비)"
+   },
+   "R15": {
+    "value": null,
+    "passed": null,
+    "detail": "N/A (비교 대상 없음)"
+   },
+   "R16": {
+    "value": 0.8,
+    "passed": false,
+    "detail": [
+     true,
+     true,
+     false,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "bs43/Building-Structural.ifc": {
+  "schema": "IFC4X3",
+  "nphys": 16,
+  "level": 50,
+  "mode": "LoGeoRef50",
+  "crs": "EPSG:32760",
+  "seconds": 0.4,
+  "facilities": [
+   [
+    "IfcBuilding",
+    "Single-family house",
+    5.83,
+    12.3
+   ]
+  ],
+  "classes": {
+   "GenericCityObject": 10,
+   "BuildingConstructiveElement": 6
+  },
+  "results": {
+   "R01": {
+    "value": 0,
+    "passed": true
+   },
+   "R02": {
+    "value": 0.0,
+    "passed": true,
+    "detail": 0
+   },
+   "R03": {
+    "value": 50,
+    "passed": true,
+    "detail": [
+     30,
+     50
+    ]
+   },
+   "R04": {
+    "value": 1.0,
+    "passed": true
+   },
+   "R05": {
+    "value": 0.125,
+    "passed": false,
+    "detail": 2
+   },
+   "R06": {
+    "value": 0.0,
+    "passed": false,
+    "detail": "0/4"
+   },
+   "R07": {
+    "value": 1.0,
+    "passed": true,
+    "detail": "16/16"
+   },
+   "R08": {
+    "value": 0,
+    "passed": true
+   },
+   "R09": {
+    "value": 0.375,
+    "passed": false,
+    "detail": "6/16"
+   },
+   "R10": {
+    "value": null,
+    "passed": true,
+    "detail": "no solid elements"
+   },
+   "R11": {
+    "value": 0,
+    "passed": true,
+    "detail": []
+   },
+   "R12": {
+    "value": 0,
+    "passed": true
+   },
+   "R13": {
+    "value": true,
+    "passed": true,
+    "detail": "1.000 in [174,-80,180,0]"
+   },
+   "R14": {
+    "value": 0.0,
+    "passed": true,
+    "detail": "공통기준객체 편차(연합모델 중앙값 대비)"
+   },
+   "R15": {
+    "value": 0.0,
+    "passed": true
+   },
+   "R16": {
+    "value": 0.8,
+    "passed": false,
+    "detail": [
+     true,
+     true,
+     false,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "osb/AC11-FZK-Haus-IFC.ifc": {
+  "schema": "IFC2X3",
+  "nphys": 110,
+  "level": 40,
+  "mode": "LoGeoRef20(approx.)",
+  "crs": "EPSG:32633",
+  "seconds": 20.0,
+  "facilities": [
+   [
+    "IfcBuilding",
+    "FZK-Haus",
+    6.52,
+    143.0
+   ]
+  ],
+  "classes": {
+   "BuildingConstructiveElement": 88,
+   "BuildingInstallation": 7,
+   "BuildingFurniture": 15
+  },
+  "results": {
+   "R01": {
+    "value": 0,
+    "passed": true
+   },
+   "R02": {
+    "value": 0.0,
+    "passed": true,
+    "detail": 0
+   },
+   "R03": {
+    "value": 40,
+    "passed": false,
+    "detail": [
+     20,
+     40
+    ]
+   },
+   "R04": {
+    "value": null,
+    "passed": null,
+    "detail": "N/A (no IfcMapConversion)"
+   },
+   "R05": {
+    "value": 0.0,
+    "passed": true,
+    "detail": 0
+   },
+   "R06": {
+    "value": 1.0,
+    "passed": true,
+    "detail": "33/33"
+   },
+   "R07": {
+    "value": 1.0,
+    "passed": true,
+    "detail": "110/110"
+   },
+   "R08": {
+    "value": 0,
+    "passed": true
+   },
+   "R09": {
+    "value": 1.0,
+    "passed": true,
+    "detail": "110/110"
+   },
+   "R10": {
+    "value": 1.0,
+    "passed": true,
+    "detail": "elem 90/90, LoD1 ok"
+   },
+   "R11": {
+    "value": 0,
+    "passed": true,
+    "detail": []
+   },
+   "R12": {
+    "value": 0,
+    "passed": true
+   },
+   "R13": {
+    "value": true,
+    "passed": true,
+    "detail": "1.000 in [12,0,18,84]"
+   },
+   "R14": {
+    "value": null,
+    "passed": null,
+    "detail": "N/A (기준자료 없음)"
+   },
+   "R15": {
+    "value": null,
+    "passed": null,
+    "detail": "N/A (비교 대상 없음)"
+   },
+   "R16": {
+    "value": 1.0,
+    "passed": true,
+    "detail": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "osb/AC11-Institute-Var-2-IFC.ifc": {
+  "schema": "IFC2X3",
+  "nphys": 699,
+  "level": 40,
+  "mode": "LoGeoRef20(approx.)",
+  "crs": "EPSG:32632",
+  "seconds": 19.8,
+  "facilities": [
+   [
+    "IfcBuilding",
+    "Buerogebaeude",
+    15.35,
+    653.0
+   ]
+  ],
+  "classes": {
+   "BuildingConstructiveElement": 446,
+   "BuildingFurniture": 253
+  },
+  "results": {
+   "R01": {
+    "value": 0,
+    "passed": true
+   },
+   "R02": {
+    "value": 0.0,
+    "passed": true,
+    "detail": 0
+   },
+   "R03": {
+    "value": 40,
+    "passed": false,
+    "detail": [
+     20,
+     40
+    ]
+   },
+   "R04": {
+    "value": null,
+    "passed": null,
+    "detail": "N/A (no IfcMapConversion)"
+   },
+   "R05": {
+    "value": 0.0,
+    "passed": true,
+    "detail": 0
+   },
+   "R06": {
+    "value": 1.0,
+    "passed": true,
+    "detail": "428/428"
+   },
+   "R07": {
+    "value": 1.0,
+    "passed": true,
+    "detail": "699/699"
+   },
+   "R08": {
+    "value": 0,
+    "passed": true
+   },
+   "R09": {
+    "value": 1.0,
+    "passed": true,
+    "detail": "699/699"
+   },
+   "R10": {
+    "value": 0.9943,
+    "passed": true,
+    "detail": "elem 695/699, LoD1 ok"
+   },
+   "R11": {
+    "value": 0,
+    "passed": true,
+    "detail": []
+   },
+   "R12": {
+    "value": 0,
+    "passed": true
+   },
+   "R13": {
+    "value": true,
+    "passed": true,
+    "detail": "1.000 in [6,0,12,84]"
+   },
+   "R14": {
+    "value": null,
+    "passed": null,
+    "detail": "N/A (기준자료 없음)"
+   },
+   "R15": {
+    "value": null,
+    "passed": null,
+    "detail": "N/A (비교 대상 없음)"
+   },
+   "R16": {
+    "value": 1.0,
+    "passed": true,
+    "detail": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "osb/AC-20-Smiley-West-10-Bldg_fix.ifc": {
+  "schema": "IFC4",
+  "nphys": 831,
+  "level": 40,
+  "mode": "LoGeoRef20(approx.)",
+  "crs": "EPSG:32632",
+  "seconds": 73.1,
+  "facilities": [
+   [
+    "IfcBuilding",
+    "Gebäude",
+    11.01,
+    651.8
+   ]
+  ],
+  "classes": {
+   "BuildingConstructiveElement": 831
+  },
+  "results": {
+   "R01": {
+    "value": 95,
+    "passed": false
+   },
+   "R02": {
+    "value": 0.0,
+    "passed": true,
+    "detail": 0
+   },
+   "R03": {
+    "value": 40,
+    "passed": false,
+    "detail": [
+     20,
+     40
+    ]
+   },
+   "R04": {
+    "value": null,
+    "passed": null,
+    "detail": "N/A (no IfcMapConversion)"
+   },
+   "R05": {
+    "value": 0.0,
+    "passed": true,
+    "detail": 0
+   },
+   "R06": {
+    "value": 0.9478,
+    "passed": false,
+    "detail": "617/651"
+   },
+   "R07": {
+    "value": 1.0,
+    "passed": true,
+    "detail": "831/831"
+   },
+   "R08": {
+    "value": 0,
+    "passed": true
+   },
+   "R09": {
+    "value": 1.0,
+    "passed": true,
+    "detail": "831/831"
+   },
+   "R10": {
+    "value": 1.0,
+    "passed": true,
+    "detail": "elem 831/831, LoD1 ok"
+   },
+   "R11": {
+    "value": 0,
+    "passed": true,
+    "detail": []
+   },
+   "R12": {
+    "value": 0,
+    "passed": true
+   },
+   "R13": {
+    "value": true,
+    "passed": true,
+    "detail": "1.000 in [6,0,12,84]"
+   },
+   "R14": {
+    "value": null,
+    "passed": null,
+    "detail": "N/A (기준자료 없음)"
+   },
+   "R15": {
+    "value": null,
+    "passed": null,
+    "detail": "N/A (비교 대상 없음)"
+   },
+   "R16": {
+    "value": 1.0,
+    "passed": true,
+    "detail": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   }
+  }
+ }
+}
