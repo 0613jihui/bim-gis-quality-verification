@@ -5,7 +5,7 @@
   "level": 50,
   "mode": "LoGeoRef50",
   "crs": "EPSG:32760",
-  "seconds": 0.9,
+  "seconds": 0.4,
   "facilities": [
    [
     "IfcBuilding",
@@ -112,7 +112,7 @@
   "level": 50,
   "mode": "LoGeoRef50",
   "crs": "EPSG:32760",
-  "seconds": 0.4,
+  "seconds": 0.3,
   "facilities": [
    [
     "IfcBuilding",
@@ -329,7 +329,7 @@
   "level": 50,
   "mode": "LoGeoRef50",
   "crs": "EPSG:32760",
-  "seconds": 0.5,
+  "seconds": 0.4,
   "facilities": [
    [
     "IfcBuilding",
@@ -435,7 +435,7 @@
   "level": 40,
   "mode": "LoGeoRef20(approx.)",
   "crs": "EPSG:32633",
-  "seconds": 17.2,
+  "seconds": 16.3,
   "facilities": [
    [
     "IfcBuilding",
@@ -547,7 +547,7 @@
   "level": 40,
   "mode": "LoGeoRef20(approx.)",
   "crs": "EPSG:32632",
-  "seconds": 23.2,
+  "seconds": 23.6,
   "facilities": [
    [
     "IfcBuilding",
@@ -658,7 +658,7 @@
   "level": 40,
   "mode": "LoGeoRef20(approx.)",
   "crs": "EPSG:32632",
-  "seconds": 85.4,
+  "seconds": 83.9,
   "facilities": [
    [
     "IfcBuilding",

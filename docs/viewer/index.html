@@ -261,7 +261,7 @@ footer a, .lead a { color: var(--accent); }
         </div>
         <div class="card">
           <div class="card-head">
-            <h2>같은 회전각이라도 건물이 클수록 크게 어긋납니다</h2>
+            <h2>같은 회전각이라도 변환 원점에서 멀수록 크게 어긋납니다</h2>
           </div>
           <svg id="sens" viewBox="0 0 560 380" role="img" aria-label="회전각에 따른 위치편차"></svg>
           <p class="hint" id="sensNote"></p>
@@ -271,7 +271,7 @@ footer a, .lead a { color: var(--accent); }
   </main>
 
   <footer>
-    코드·데이터: <a href="https://github.com/0613jihui/bim-gis-quality-verification">github.com/0613jihui/bim-gis-quality-verification</a> (커밋 4205001의 out/ 결과에서 viewer_export.py로 추출)
+    코드·데이터: <a href="https://github.com/0613jihui/bim-gis-quality-verification">github.com/0613jihui/bim-gis-quality-verification</a> (저장소 main 브랜치의 out/ 결과에서 viewer_export.py로 추출, 원고의 커밋 표기와 같은 버전)
   </footer>
 </div>
 
@@ -753,7 +753,7 @@ function renderSens(cur) {
   });
   labs.sort((a, b) => a.y - b.y).forEach((l, i, a) => { if (i && l.y - a[i - 1].y < 14) l.y = a[i - 1].y + 14; g += `<text x="${l.x}" y="${l.y}" style="font-size:12px">${l.t}</text>`; });
   $("#sens").innerHTML = g;
-  $("#sensNote").innerHTML = `실험(E3)에서 측정한 회전각별 위치편차입니다. 편차는 회전 중심에서 건물 끝까지의 거리에 비례해, τ를 넘는 임계 회전각은 ` +
+  $("#sensNote").innerHTML = `실험(E3)에서 측정한 회전각별 위치편차입니다. 편차는 건물 크기가 아니라 변환 원점(회전 중심)에서 형상 끝까지의 거리 r에 비례하며 r × θ를 넘지 않으므로, θ ≤ τ / r이면 R14를 통과합니다. 측정한 임계 회전각은 ` +
     Object.entries(crit).map(([b, v]) => `${b} ${v.toFixed(2)}°`).join(" · ") + `입니다. 큰 점은 왼쪽에서 고른 모델과 회전각입니다. 원점 이동은 이동량이 그대로 편차가 됩니다.`;
 }
 

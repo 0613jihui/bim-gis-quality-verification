@@ -27,7 +27,7 @@ BG-QVF는 IFC 건물 모델을 CityGML 3.0(CityJSON 2.0)으로 옮겨 GIS에 통
 
 ```
 qvf.py              검사 규칙 16개(P1/P2/P3)와 IFC → CityGML 3.0(CityJSON) 변환기
-e1_analysis.py      E1  공개 건물 IFC 7종 분석(IV장)
+e1_analysis.py      E1  공개 건물 IFC 7종 분석(IV장), CityJSON 출력
 e2_mutation.py      E2  결함 주입 실험 M1–M10(V장 1–3절)
 e2_analyze.py       E2  결과 집계(결함 유형별·검사 구성별·기준 모델별)
 e3_sweep.py         E3  원점 이동·회전 민감도(V장 4절)
@@ -35,6 +35,7 @@ fig_cases.py        그림 3·4 생성
 extra_checks.py     기본 출력에 저장되지 않는 본문 수치 재현
 e2_rerun_m5.py      기록용(아래 '참고' 참조)
 download_data.py    실험 데이터 9개를 고정 커밋에서 내려받고 SHA-256 확인
+validate_cityjson.py  출력 CityJSON 7개를 공식 스키마(2.0.2)로 검사하고 LoD1 솔리드가 닫혔는지 확인
 viewer_export.py    검증 뷰어용 데이터 추출 → docs/viewer/data/
 out/                실험 원자료(JSON), 변환 결과(*.city.json), 그림 3·4
 docs/figures/       논문 그림 1–4
@@ -86,6 +87,7 @@ pip install -r requirements.txt
 python download_data.py                                # bs43/, osb/ 폴더 생성
 
 python e1_analysis.py      # 약 2분
+python validate_cityjson.py # 출력 파일 적합성 확인(CityJSON 공식 스키마를 내려받음)
 python e2_mutation.py      # 가장 오래 걸림(131개 변이 모델). B1,B2처럼 기준 모델만 지정해 다시 실행 가능
 python e2_analyze.py
 python e3_sweep.py
@@ -113,6 +115,7 @@ PredefinedType을 정리하도록 `e2_mutation.py`를 고친 뒤 M5만 다시 �
 `e2_rerun_m5.py`는 그 재실행 과정을 남긴 기록용 스크립트입니다.
 
 판정 상태는 통과·불합격·해당 없음(`status: "NA"`, 검사할 대상이 모델에 없음)·판정 불가(`status: "ND"`, 판정에 필요한 자료가 없음)의 네 가지입니다.
+출력 CityJSON은 건물을 LoD1 Solid로, 부재를 형상 없는 하위 객체(parents로 건물에 연결)로 저장합니다. 초기 버전은 부재의 parents가 빠지고 LoD1을 MultiSurface로 내보내 7개 중 6개가 공식 스키마를 통과하지 못했으나, 수정 후 7개 모두 통과합니다. R09·R10은 변환기 내부의 클래스 할당과 형상(IFC 부재 솔리드, 내부에서 생성한 LoD1 솔리드)을 검사하며, 최종 파일의 형식 적합성은 validate_cityjson.py로 따로 확인합니다.
 초기 버전은 건물이 없는 모델(Building-Landscaping)의 R11을 "통과"로 집계했으나, 검사 대상이 없으므로 "해당 없음"으로 고쳤습니다(판정 99건 → 98건).
 
 ## 사용한 오픈소스

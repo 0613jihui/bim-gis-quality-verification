@@ -6,3 +6,4 @@ out/e1_reference.pkl
 __pycache__/
 *.pyc
 .venv/
+schemas/

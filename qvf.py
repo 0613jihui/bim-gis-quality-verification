@@ -582,7 +582,14 @@ def run(m, reference=None, context=None, controls=None, meshes=None, stages=("P1
 
 
 def to_cityjson(conv, path):
-    """write the converted dataset as CityJSON 2.0 (LoD1/LoD0 facilities + element bboxes as attributes)"""
+    """write the converted dataset as CityJSON 2.0.
+
+    - 건물(LoD1): 평면 윤곽을 최저·최고 표고 사이로 압출한 Solid(평면이 여러 개면 MultiSolid). 바깥 방향 법선.
+    - 도로·철도 등(LoD0): 평면 MultiSurface.
+    - 부재: 형상 없이 CityGML 클래스, IFC 식별자, 경계상자를 속성으로 갖는 객체. 건물 부재(2차 객체)는
+      parents로 건물에 연결하고, 건물은 children으로 부재를 가리킨다(CityJSON 2.0 필수 관계).
+    """
+    from shapely.geometry.polygon import orient
     cj = {"type": "CityJSON", "version": "2.0", "transform": {"scale": [0.001, 0.001, 0.001], "translate": [0, 0, 0]},
           "metadata": {"referenceSystem": f"https://www.opengis.net/def/crs/EPSG/0/{conv['crs'].split(':')[-1]}" if conv["crs"] else None},
           "CityObjects": {}, "vertices": []}
@@ -600,32 +607,44 @@ def to_cityjson(conv, path):
                   int(round((y - cj["transform"]["translate"][1]) / 0.001)), int(round(z / 0.001))])
         return len(V) - 1
     tmap = {"IfcBuilding": "Building", "IfcBridge": "Bridge", "IfcRoad": "Road", "IfcRailway": "Railway"}
+    CO = cj["CityObjects"]
     for f in conv["facilities"]:
         fp = f["footprint"]
         if fp is None or fp.is_empty:
             continue
         polys = [fp] if isinstance(fp, Polygon) else [p for p in getattr(fp, "geoms", []) if isinstance(p, Polygon)]
-        surfaces = []
+        polys = [p for p in polys if p.area >= 1e-4]                  # 평면 합집합에서 남은 면적 0의 조각 제외
+        shells = []
         for p in polys:
-            ring = list(p.exterior.coords)[:-1]
+            ring = list(orient(p, 1.0).exterior.coords)[:-1]          # 반시계 방향 → 측면 법선이 바깥쪽
             if f["lod"] == 1:
                 bot = [addv(x, y, f["zmin"]) for x, y in ring]
                 top = [addv(x, y, f["zmax"]) for x, y in ring]
-                surfaces.append([bot[::-1]]); surfaces.append([top])
+                shell = [[bot[::-1]], [top]]
                 for i in range(len(ring)):
                     j = (i + 1) % len(ring)
-                    surfaces.append([[bot[i], bot[j], top[j], top[i]]])
+                    shell.append([[bot[i], bot[j], top[j], top[i]]])
+                shells.append(shell)
             else:
-                surfaces.append([[addv(x, y, f["zmin"]) for x, y in ring]])
-        geom = ({"type": "MultiSolid", "lod": "1", "boundaries": [[[s] for s in surfaces]]} if False else
-                {"type": "MultiSurface", "lod": str(f["lod"]), "boundaries": surfaces})
-        cj["CityObjects"][f["guid"]] = {"type": tmap.get(f["type"], "GenericCityObject"),
-                                        "attributes": {"ifc_guid": f["guid"], "name": f["name"]}, "geometry": [geom]}
+                shells.append([[addv(x, y, f["zmin"]) for x, y in ring]])
+        if f["lod"] == 1:
+            geom = ({"type": "Solid", "lod": "1", "boundaries": [shells[0]]} if len(shells) == 1 else
+                    {"type": "MultiSolid", "lod": "1", "boundaries": [[sh] for sh in shells]})
+        else:
+            geom = {"type": "MultiSurface", "lod": str(f["lod"]), "boundaries": shells}
+        CO[f["guid"]] = {"type": tmap.get(f["type"], "GenericCityObject"),
+                         "attributes": {"ifc_guid": f["guid"], "name": f["name"]}, "geometry": [geom]}
     for e in conv["features"]:
-        if e["guid"] in cj["CityObjects"]:
+        if e["guid"] in CO:
             continue
-        cj["CityObjects"][e["guid"]] = {"type": e["cls"] if e["cls"] != GENERIC else "GenericCityObject",
-                                        "attributes": {"ifc_guid": e["guid"], "ifc_class": e["ifc"], "name": e["name"],
-                                                       "bbox": e.get("bbox")}}
+        obj = {"type": e["cls"] if e["cls"] != GENERIC else "GenericCityObject",
+               "attributes": {"ifc_guid": e["guid"], "ifc_class": e["ifc"], "name": e["name"], "bbox": e.get("bbox")}}
+        if obj["type"].startswith("Building") and obj["type"] != "Building" and e.get("facility"):
+            ft, fg, fn = e["facility"]
+            if fg not in CO:                                          # 형상이 없는 건물도 부모 객체로 둔다
+                CO[fg] = {"type": "Building", "attributes": {"ifc_guid": fg, "name": fn}}
+            obj["parents"] = [fg]
+            CO[fg].setdefault("children", []).append(e["guid"])
+        CO[e["guid"]] = obj
     with open(path, "w") as fh:
         json.dump(cj, fh)
