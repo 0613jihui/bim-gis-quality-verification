@@ -99,3 +99,10 @@ ifcopenshell 0.9.0, shapely 2.2, trimesh 5.2, pyproj 3.8(PROJ 9.8), mapbox_earcu
 결함 M5(분류 손실)는 초기 실행에서 재분류 후 기존 PredefinedType이 남아 스키마 위반이 함께 발생했습니다.
 PredefinedType을 정리하도록 `e2_mutation.py`를 고친 뒤 M5만 다시 실행했으며, `out/e2_raw.json`과 논문 수치는 수정 후 결과입니다.
 `e2_rerun_m5.py`는 그 재실행 과정을 남긴 기록용 스크립트입니다.
+
+## 라이선스
+
+이 저장소의 코드와 문서는 [MIT 라이선스](LICENSE)를 따릅니다.
+실험에 사용한 원본 IFC와 그로부터 변환한 결과(`out/*.city.json`)에는 원본 데이터의 조건이 함께 적용됩니다.
+buildingSMART 모델은 CC BY 4.0이며, opensourceBIM 모델(AC11-FZK-Haus, AC11-Institute-Var-2, AC-20-Smiley-West)은
+원본 저장소에 라이선스가 명시되어 있지 않아 해당 변환 결과는 연구 재현 목적으로만 제공합니다.
