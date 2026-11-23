@@ -344,7 +344,7 @@ def stage_p1(m, g, meshes, phys):
         ok = abs(eff - 1.0) <= TH["R04_scale_tol"]
         R["R04"] = dict(value=round(eff, 6), passed=ok)
     else:
-        R["R04"] = dict(value=None, passed=None, detail="N/A (no IfcMapConversion)")
+        R["R04"] = dict(value=None, passed=None, status="ND", detail="판정 불가: IfcMapConversion 없음(R03 불합격)")
     # R05 proxy ratio
     px = sum(1 for e in phys if e.is_a("IfcBuildingElementProxy"))
     r = px / max(1, len(phys))
@@ -360,7 +360,7 @@ def stage_p1(m, g, meshes, phys):
         r = has / len(env)
         R["R06"] = dict(value=round(r, 4), passed=r >= TH["R06_min_isexternal"], detail=f"{has}/{len(env)}")
     else:
-        R["R06"] = dict(value=None, passed=None, detail="N/A (no envelope elements)")
+        R["R06"] = dict(value=None, passed=None, status="NA", detail="해당 없음: 외피 부재 없음")
     # R07 triangulation success
     ok = sum(1 for e in phys if e.id() in meshes and len(meshes[e.id()][1]) > 0)
     r = ok / max(1, len(phys))
@@ -451,10 +451,15 @@ def stage_p2(conv):
         R["R10"] = dict(value=round(r, 4), passed=(r >= TH["R10_min_solid_valid"]) and lod1_ok,
                         detail=f"elem {vs['valid']}/{vs['checked']}, LoD1 {'ok' if lod1_ok else 'invalid'}")
     else:
-        R["R10"] = dict(value=None, passed=lod1_ok if lod1 else None, detail="no solid elements")
+        if lod1:
+            R["R10"] = dict(value=None, passed=lod1_ok, detail=f"솔리드 부재 없음, LoD1 {'ok' if lod1_ok else 'invalid'}")
+        else:
+            R["R10"] = dict(value=None, passed=None, status="NA", detail="해당 없음: 솔리드 부재·LoD1 건물 없음")
     # R11 plausibility of converted facilities
     if conv["T"] is None:
         R["R11"] = dict(value=None, passed=False, detail="변환 불가(좌표참조 없음)")
+    elif not conv["facilities"]:   # 검사할 건물이 없으면 통과가 아니라 해당 없음
+        R["R11"] = dict(value=None, passed=None, status="NA", detail="해당 없음: 변환된 건물 없음")
     else:
         bad = []
         for f in conv["facilities"]:
@@ -535,7 +540,7 @@ def stage_p3(m, conv, reference=None, context=None, controls=None):
     elif reference is not None and reference:
         R["R14"] = dict(value=None, passed=False, detail="기준객체 대응 실패")
     else:
-        R["R14"] = dict(value=None, passed=None, detail="N/A (기준자료 없음)")
+        R["R14"] = dict(value=None, passed=None, status="ND", detail="판정 불가: 기준자료 없음")
     # R15 overlap building vs transport facilities
     allf = list(conv["facilities"]) + list(context or [])
     bld = [f for f in allf if f["type"] == "IfcBuilding" and f["footprint"] is not None]
@@ -548,8 +553,10 @@ def stage_p3(m, conv, reference=None, context=None, controls=None):
             ov = max(ov, b["footprint"].intersection(t["footprint"]).area)
     if bld and trn:
         R["R15"] = dict(value=round(ov, 3), passed=ov <= TH["R15_max_overlap"])
+    elif not bld:
+        R["R15"] = dict(value=None, passed=None, status="NA", detail="해당 없음: 변환된 건물 없음")
     else:
-        R["R15"] = dict(value=None, passed=None, detail="N/A (비교 대상 없음)")
+        R["R15"] = dict(value=None, passed=None, status="ND", detail="판정 불가: 비교할 기존 시설물 레이어 없음")
     # R16 metadata completeness
     h = m.header.file_name
     items = [bool(h.time_stamp), bool(h.originating_system),

@@ -78,6 +78,7 @@ button { font: inherit; color: inherit; }
 .pill.P { background: var(--pass-soft); color: var(--pass); }
 .pill.F { background: var(--fail-soft); color: var(--fail); }
 .pill.N { background: var(--na-soft); color: var(--na); }
+.pill.D { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
 
 /* 판정표 */
 table { border-collapse: collapse; width: 100%; }
@@ -94,6 +95,7 @@ table { border-collapse: collapse; width: 100%; }
 .dot.P { background: var(--pass-soft); color: var(--pass); }
 .dot.F { background: var(--fail); color: #fff; }
 .dot.N { color: var(--na); }
+.dot.D { color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
 .matrix td.cur .dot { outline: 2px solid var(--accent); outline-offset: 1px; }
 .bid { display: inline-block; font-family: var(--font-mono); font-size: 11.5px; padding: 0 6px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); margin-right: 6px; }
 .sep-l { border-left: 2px solid var(--line); }
@@ -186,7 +188,7 @@ footer a, .lead a { color: var(--accent); }
           <span class="hint">대표 모델(B1–B4) 행이나 칸을 누르면 아래에서 3D로 봅니다</span>
         </div>
         <div class="scroll"><table class="matrix" id="e1matrix"></table></div>
-        <div class="legend"><span><span class="dot P">✓</span> 통과</span><span><span class="dot F">✕</span> 불합격</span><span><span class="dot N">–</span> 해당없음</span></div>
+        <div class="legend"><span><span class="dot P">✓</span> 통과</span><span><span class="dot F">✕</span> 불합격</span><span><span class="dot N">–</span> 해당 없음(검사 대상이 없음)</span><span><span class="dot D">?</span> 판정 불가(필요한 자료가 없음)</span></div>
       </div>
       <div class="split">
         <div class="card">
@@ -325,11 +327,11 @@ const ELEMENT_RULES = new Set(["R02","R05","R06","R07","R08","R09","R10","R12"])
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const pct = v => (v * 100).toFixed(1).replace(/\.0$/, "") + "%";
-const st = r => r == null || r.passed == null ? "N" : r.passed ? "P" : "F";
-const stKo = { P: "통과", F: "불합격", N: "해당없음" };
+const st = r => r == null || r.passed == null ? (r && r.status === "ND" ? "D" : "N") : r.passed ? "P" : "F";
+const stKo = { P: "통과", F: "불합격", N: "해당 없음", D: "판정 불가" };
 
 function fmtVal(id, r) {
-  if (!r || r.passed == null) return "–";
+  if (!r || r.passed == null) return r && r.status === "ND" ? "자료 없음" : "–";
   const v = r.value, d = r.detail;
   switch (id) {
     case "R01": case "R08": case "R12": return `${v}건`;
@@ -381,7 +383,7 @@ function renderE1Matrix() {
     const ev = ids.filter(id => m.rules[id] && m.rules[id].passed != null), ok = ev.filter(id => m.rules[id].passed).length;
     h += `<tr class="${m.bid ? "pick" : ""}" data-bid="${m.bid || ""}"><td class="left">${m.bid ? `<span class="bid">${m.bid}</span>` : `<span class="bid" style="visibility:hidden">B0</span>`}${esc(m.file.replace(".ifc", ""))}</td>` +
       `<td class="mono">${m.schema}</td><td class="num">${m.nphys}</td>` +
-      ids.map(id => { const s = st(m.rules[id]); return `<td class="c ${["R09","R13"].includes(id) ? "sep-l" : ""}" data-r="${id}" title="${id} ${esc(RULES[id][0])}: ${stKo[s]} (${esc(fmtVal(id, m.rules[id]))})"><span class="dot ${s}">${s === "P" ? "✓" : s === "F" ? "✕" : "–"}</span></td>`; }).join("") +
+      ids.map(id => { const s = st(m.rules[id]); return `<td class="c ${["R09","R13"].includes(id) ? "sep-l" : ""}" data-r="${id}" title="${id} ${esc(RULES[id][0])}: ${stKo[s]} (${esc(fmtVal(id, m.rules[id]))})"><span class="dot ${s}">${s === "P" ? "✓" : s === "F" ? "✕" : s === "D" ? "?" : "–"}</span></td>`; }).join("") +
       `<td class="num">${ok}/${ev.length}</td></tr>`;
   });
   $("#e1matrix").innerHTML = h + "</tbody>";
@@ -452,11 +454,11 @@ function modelLevelText(id, M) {
       const lv = { 10: "주소", 20: "위경도", 30: "현장 원점", 40: "진북", 50: "지도변환+좌표계" };
       return `이 모델이 가진 정보: ${(d || []).map(x => `${x} ${lv[x]}`).join(" · ") || "없음"}. ` + (r.passed ? "IfcMapConversion으로 지도좌표를 바로 계산합니다." : "지도변환 정보가 없어 위경도와 진북으로 UTM 좌표를 근사 계산했습니다(LoGeoRef 20 근사).");
     }
-    case "R04": return r.passed == null ? "IfcMapConversion이 없어 검사 대상이 아닙니다." : `축척/단위 = ${r.value}로 기준 안입니다.`;
-    case "R11": return r.value ? `기준을 벗어난 건물: ${esc(JSON.stringify(d))}` : `변환된 LoD1 건물의 높이 ${M.lod1.map(l => (l.z[1] - l.z[0]).toFixed(2) + " m").join(", ")}, 면적과 변환 전후 면적비가 모두 기준 안입니다.`;
+    case "R04": return r.passed == null ? "IfcMapConversion이 없어 축척을 확인할 수 없습니다(판정 불가). 이 모델은 이미 R03에서 불합격입니다." : `축척/단위 = ${r.value}로 기준 안입니다.`;
+    case "R11": if (r.passed == null) return esc(d); return r.value ? `기준을 벗어난 건물: ${esc(JSON.stringify(d))}` : `변환된 LoD1 건물의 높이 ${M.lod1.map(l => (l.z[1] - l.z[0]).toFixed(2) + " m").join(", ")}, 면적과 변환 전후 면적비가 모두 기준 안입니다.`;
     case "R13": return `좌표계 ${M.crs}. 적용 범위 판정: ${esc(d)}`;
-    case "R14": return r.passed == null ? "이 모델에는 비교할 기준자료가 없어 원본 상태에서는 판정하지 않습니다. 결함 주입 실험(E2)에서는 원본 변환 결과를 기준으로 삼아 판정했습니다." : `연합 모델이 공유하는 기준객체(geo-reference)의 위치를 다른 모델들의 중앙값과 비교: 편차 ${r.value} m. ${esc(d)}`;
-    case "R15": return r.passed == null ? "함께 통합할 도로·철도 레이어가 없어 검사 대상이 아닙니다." : `같은 현장의 도로·철도 레이어(Infra-Road, Infra-Rail)와 겹치는 면적 ${r.value} m².`;
+    case "R14": return r.passed == null ? "이 모델에는 비교할 기준자료가 없어 판정할 수 없습니다(판정 불가). 결함 주입 실험(E2)에서는 결함을 추가로 주입하지 않은 기준 모델의 변환 결과를 기준으로 삼아, 주입한 위치 변화를 R14가 탐지하는지 확인했습니다." : `연합 모델이 공유하는 기준객체(geo-reference)의 위치를 다른 모델들의 중앙값과 비교: 편차 ${r.value} m. ${esc(d)}`;
+    case "R15": return r.passed == null ? esc(d) + "." : `같은 현장의 도로·철도 레이어(Infra-Road, Infra-Rail)와 겹치는 면적 ${r.value} m².`;
     case "R16": {
       const names = ["작성 시각", "작성 소프트웨어", "작성자/기관", "좌표계", "길이 단위"];
       return names.map((n, i) => `${d[i] ? "✓" : "✕"} ${n}`).join(" · ");
