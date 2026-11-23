@@ -1,4 +1,4 @@
-"""본문 수치 중 e1/e2/e3 기본 출력에 직접 저장되지 않는 항목을 재현하는 보조 스크립트.
+"""실험 수치 중 e1/e2/e3 기본 출력에 직접 저장되지 않는 항목을 재현하는 보조 스크립트.
 실행: python extra_checks.py  (e1_analysis.py, e2_mutation.py, e3_sweep.py 실행 후)
 결과: out/extra_checks.json + 화면 출력"""
 import json, collections, sys, platform
@@ -73,7 +73,7 @@ for mt in ["M2_GEO_SHIFT", "M3_GEO_ROT"]:
     tau[mt] = {t: f"{sum(x > t for x in v)}/{len(v)}" for t in [0.05, 0.1, 0.2, 0.3, 0.5, 1.0]}
 R["tau_sensitivity"] = tau
 
-# 6. 회전 민감도의 임계각 (V-4, 그림 2): tau / (1도에서의 편차)
+# 6. 회전 민감도의 추정 임계각: tau / (1도에서의 편차)
 sw = json.load(open("out/e3_sweep.json"))
 R["critical_angle_deg_tau0.2"] = {b: round(0.2 / next(x["dev"] for x in sw if x["bid"] == b and x["kind"] == "rot" and x["v"] == 1.0 and x["sign"] == 1), 2)
                                   for b in ["B1", "B2", "B3", "B4"]}

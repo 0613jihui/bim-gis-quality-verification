@@ -1,7 +1,6 @@
 # 건축물 BIM–GIS 연계 데이터의 단계별 품질 검증 체계(BG-QVF)
 
-논문 「건설정보–공간정보 연계 데이터의 단계별 품질 검증 체계 설계 연구 -건축물을 대상으로-」(한국콘텐츠학회논문지 투고 원고)의
-검증 체계 구현 코드, 실험 스크립트, 변환 결과와 실험 원자료입니다.
+건물 IFC 모델을 GIS로 연계하는 과정의 품질 검증 체계(BG-QVF) 구현 코드, 실험 스크립트, 변환 결과와 실험 원자료입니다.
 
 BG-QVF는 IFC 건물 모델을 CityGML 3.0(CityJSON 2.0)으로 옮겨 GIS에 통합하는 과정을 세 단계로 나누어 검사합니다.
 
@@ -29,41 +28,41 @@ R14(위치편차)는 기준자료의 종류에 따라 두 방법으로 측정합
 
 ```
 qvf.py              검사 규칙 16개(P1/P2/P3)와 IFC → CityGML 3.0(CityJSON) 변환기
-e1_analysis.py      E1  공개 건물 IFC 7종 분석(IV장), CityJSON 출력
-e2_mutation.py      E2  오류 삽입 실험 M1–M10(V장 1–2절)
+e1_analysis.py      E1  공개 건물 IFC 7종 분석, CityJSON 출력
+e2_mutation.py      E2  오류 삽입 실험 M1–M10
 e2_analyze.py       E2  결과 집계(오류 유형별·검사 구성별·기준 모델별)
-e3_sweep.py         E3  원점 이동·회전 민감도(V장 3절)
-fig_cases.py        그림 2와 보조 그림(오류 전후 평면) 생성
-extra_checks.py     기본 출력에 저장되지 않는 본문 수치 재현
+e3_sweep.py         E3  원점 이동·회전 민감도
+fig_cases.py        대표 사례 변환 결과 그림, 공간참조 오류 전후 평면 그림 생성
+extra_checks.py     기본 출력에 저장되지 않는 보조 수치 계산
 e2_rerun_m5.py      기록용(아래 '참고' 참조)
 download_data.py    실험 데이터 9개를 고정 커밋에서 내려받고 SHA-256 확인
 validate_cityjson.py  출력 CityJSON 7개를 공식 스키마(2.0.2)로 검사하고 LoD1 솔리드가 닫혔는지 확인
 viewer_export.py    검증 뷰어용 데이터 추출 → docs/viewer/data/
 out/                실험 원자료(JSON), 변환 결과(*.city.json), 그림 파일
-docs/figures/       논문 그림
+docs/figures/       체계 구조도와 결과 그림
 docs/viewer/        검증 뷰어(웹 페이지와 데이터)
 ```
 
-## 논문 표·그림과 파일의 대응
+## 실험 결과와 파일의 대응
 
-| 논문 | 생성 스크립트 | 결과 파일 |
+| 결과 | 생성 스크립트 | 결과 파일 |
 |---|---|---|
-| 표 3 공개 건물 데이터 7종의 규칙별 판정 결과 | e1_analysis.py | out/e1_results.json |
-| 그림 2 대표 사례 4종의 변환 결과 | e1_analysis.py → fig_cases.py | out/fig3_cases_3d.png, out/*.city.json |
-| 표 4 삽입 오류와 탐지 결과 | e2_mutation.py → e2_analyze.py | out/e2_raw.json → out/e2_summary.json (`by_type`) |
-| 표 5 검사 구성별 탐지율 | e2_analyze.py | out/e2_summary.json (`by_conf`) |
-| 그림 3 회전 오류에 따른 위치편차 | e3_sweep.py | out/e3_sweep.json |
-| 그림 4 검증 결과 시각화 서비스 화면 | viewer_export.py | docs/viewer/ |
-| 본문 보조 수치(τ 민감도, 임계 회전각 등) | extra_checks.py | out/extra_checks.json |
-| (보조) 공간참조 오류 전후 평면 | fig_cases.py | out/fig4_georef_faults.png |
+| E1 7개 모델의 규칙별 판정 | e1_analysis.py | out/e1_results.json |
+| E1 대표 사례 4종의 변환 결과 그림 | e1_analysis.py → fig_cases.py | out/fig3_cases_3d.png, out/*.city.json |
+| E2 오류 유형별 탐지 결과 | e2_mutation.py → e2_analyze.py | out/e2_raw.json → out/e2_summary.json (`by_type`) |
+| E2 검사 구성별 탐지율 | e2_analyze.py | out/e2_summary.json (`by_conf`) |
+| E3 원점 이동·회전 민감도 | e3_sweep.py | out/e3_sweep.json |
+| E3 공간참조 오류 전후 평면 그림 | fig_cases.py | out/fig4_georef_faults.png |
+| 보조 수치(τ 민감도, 임계 회전각 등) | extra_checks.py | out/extra_checks.json |
+| 검증 뷰어 데이터 | viewer_export.py | docs/viewer/data/ |
 
-그림 1(체계 구조)은 개념도로, 코드로 생성하지 않습니다. 결과 파일 이름의 번호(fig3, fig4)는 이전 원고 기준이며, 재현 스크립트와의 호환을 위해 그대로 두었습니다.
+체계 구조도(`docs/figures/fig1_framework.png`)는 개념도로, 코드로 생성하지 않습니다. 결과 파일 이름의 번호(fig3, fig4)는 스크립트 호환을 위해 유지한 이름입니다.
 
 `out/e1_results.json`의 `seconds`는 모델별 P1·P2 처리 시간(형상 해석, P1 검사, 변환, P2 검사)이며, 실행 환경에 따라 달라집니다.
 
 ## 실험 데이터
 
-모두 공개 건물 IFC입니다. `download_data.py`가 논문 실험에 쓴 것과 같은 커밋에서 내려받아 해시를 확인합니다.
+모두 공개 건물 IFC입니다. `download_data.py`가 실험에 쓴 것과 같은 커밋에서 내려받아 해시를 확인합니다.
 
 | 기호 | 파일 | 출처 | 역할 |
 |---|---|---|---|
@@ -114,7 +113,7 @@ ifcopenshell 0.9.0, shapely 2.2, trimesh 5.2, pyproj 3.8(PROJ 9.8), mapbox_earcu
 ## 참고
 
 오류 M5(분류 손실)는 초기 실행에서 재분류 후 기존 PredefinedType이 남아 스키마 위반이 함께 발생했습니다.
-PredefinedType을 정리하도록 `e2_mutation.py`를 고친 뒤 M5만 다시 실행했으며, `out/e2_raw.json`과 논문 수치는 수정 후 결과입니다.
+PredefinedType을 정리하도록 `e2_mutation.py`를 고친 뒤 M5만 다시 실행했으며, `out/e2_raw.json`은 수정 후 결과입니다.
 `e2_rerun_m5.py`는 그 재실행 과정을 남긴 기록용 스크립트입니다.
 
 판정 상태는 통과·불합격·해당 없음(`status: "NA"`, 검사할 대상이 모델에 없음)·판정 불가(`status: "ND"`, 판정에 필요한 자료가 없음)의 네 가지입니다.
@@ -123,16 +122,16 @@ PredefinedType을 정리하도록 `e2_mutation.py`를 고친 뒤 M5만 다시 �
 
 ## 사용한 오픈소스
 
-| 도구 | 버전 | 용도 | 인용 |
-|---|---|---|---|
-| [IfcOpenShell](https://ifcopenshell.org) | 0.9.0 | IFC 읽기, 형상 삼각망화, 스키마 검증 | 논문 [32] |
-| [Shapely](https://github.com/shapely/shapely) | 2.2 | 평면 윤곽, 중첩, Hausdorff 거리 | [33] |
-| [trimesh](https://trimesh.org) | 5.2 | 솔리드 유효성, LoD1 압출 | [34] |
-| [pyproj](https://pyproj4.github.io/pyproj/) / [PROJ](https://proj.org) | 3.8 / 9.8 | 좌표 변환 (PROJ DOI: 10.5281/zenodo.5884394) | [35] [36] |
-| [NumPy](https://numpy.org) | 2.5 | 수치 계산 | [37] |
-| [Matplotlib](https://matplotlib.org) | 3.11 | 그림 2·4 | [38] |
-| [three.js](https://threejs.org) | r128 | 검증 뷰어의 3D 표시 | [39] |
-| [CityJSON](https://www.cityjson.org) | 2.0 | 변환 결과 형식 | [31] |
+| 도구 | 버전 | 용도 |
+|---|---|---|
+| [IfcOpenShell](https://ifcopenshell.org) | 0.9.0 | IFC 읽기, 형상 삼각망화, 스키마 검증 |
+| [Shapely](https://github.com/shapely/shapely) | 2.2 | 평면 윤곽, 중첩, Hausdorff 거리 |
+| [trimesh](https://trimesh.org) | 5.2 | 솔리드 유효성, LoD1 압출 |
+| [pyproj](https://pyproj4.github.io/pyproj/) / [PROJ](https://proj.org) | 3.8 / 9.8 | 좌표 변환 (PROJ DOI: 10.5281/zenodo.5884394) |
+| [NumPy](https://numpy.org) | 2.5 | 수치 계산 |
+| [Matplotlib](https://matplotlib.org) | 3.11 | 결과 그림 |
+| [three.js](https://threejs.org) | r128 | 검증 뷰어의 3D 표시 |
+| [CityJSON](https://www.cityjson.org) | 2.0.2 | 변환 결과 형식, 스키마 검사 |
 
 ## 라이선스
 

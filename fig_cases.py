@@ -1,4 +1,4 @@
-"""대표 사례 그림 생성: 그림 3(4개 모델의 변환 결과 3D), 그림 4(공간참조 결함 전후 평면 비교)"""
+"""대표 사례 그림 생성: 4개 모델의 변환 결과 3D, 공간참조 오류 전후 평면 비교"""
 import random, numpy as np, ifcopenshell, matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -30,7 +30,7 @@ for bid, name, _ in CASES:
     cache[bid] = (m, g, me, ph, qvf.convert(m, g, me, ph))
     print("loaded", bid, flush=True)
 
-# ---------------- 그림 3
+# ---------------- 4개 모델의 변환 결과 3D
 CONSTR, AUX = "#9aa6b2", "#6fa8dc"
 AUXCLS = {"BuildingFurniture", "BuildingInstallation", "BridgeInstallation", "BridgeFurniture", "CityFurniture"}
 fig = plt.figure(figsize=(10, 8.6))
@@ -78,7 +78,7 @@ plt.subplots_adjust(left=0.01, right=0.99, top=0.95, bottom=0.05, wspace=0.02, h
 fig.savefig("out/fig3_cases_3d.png", dpi=200)
 print("fig3 ok", flush=True)
 
-# ---------------- 그림 4: 공간참조 결함 전후 평면 비교 (B1, B2)
+# ---------------- 공간참조 오류 전후 평면 비교
 def fp_after(bid, mtype, **kw):
     m = ifcopenshell.open(E.BASES[bid]); E.mutate(m, mtype, random.Random(3), **kw)
     _, _, me, ph, _ = cache[bid]

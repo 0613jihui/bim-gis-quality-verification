@@ -52,8 +52,8 @@ def main():
         bad += not ok
         print(f"  {'OK ' if ok else '불일치'}  {dest}")
     if bad:
-        sys.exit(f"{bad}개 파일의 해시가 논문 실험에 사용한 파일과 다릅니다.")
-    print("모든 파일이 논문 실험에 사용한 파일과 동일합니다.")
+        sys.exit(f"{bad}개 파일의 해시가 실험에 사용한 파일과 다릅니다.")
+    print("모든 파일이 실험에 사용한 파일과 동일합니다.")
 
 
 if __name__ == "__main__":
